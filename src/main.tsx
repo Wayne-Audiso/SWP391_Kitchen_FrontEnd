@@ -4,4 +4,4 @@
   import "./styles/index.css";
 
   createRoot(document.getElementById("root")!).render(<App />);
-  //1234567
+  //1234

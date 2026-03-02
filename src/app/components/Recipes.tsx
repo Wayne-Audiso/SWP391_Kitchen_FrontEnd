@@ -51,13 +51,34 @@ import {
   type IngredientDto,
 } from "@/app/services/inventoryService";
 
-interface Recipe {
-  id: string;
-  productName: string;
-  description: string;
-  ingredients: { name: string; quantity: number; unit: string }[];
-  shelfLife: string;
+//tao mau cong thuc 
+interface LineItem extends CreateRecipeIngredientModel {
+  ingredientName: string;
+  unit?: string;
+  price?: number;
 }
+
+const emptyForm = { recipeName: "", description: "" };
+
+export function Recipes() {
+  const [recipes, setRecipes] = useState<RecipeDto[]>([]);
+  const [allIngredients, setAllIngredients] = useState<IngredientDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [lines, setLines] = useState<LineItem[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [selectedIngId, setSelectedIngId] = useState<string>("");
+  const [lineQty, setLineQty] = useState<string>("");
+
+  const [detailRecipe, setDetailRecipe] = useState<RecipeDto | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<RecipeDto | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
 const initialRecipes: Recipe[] = [
   {

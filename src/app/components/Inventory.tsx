@@ -187,18 +187,43 @@ return (
           Add Ingredient
         </Button>
       </div>
+      {/* 
+       Ô tìm kiếm nguyên liệu theo tên hoặc ID
+    */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Total Ingredients
+            </CardTitle>
+            <Package className="w-4 h-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {ingredients.length}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Ingredient types defined
+            </p>
+          </CardContent>
+        </Card>
 
-    setIngredients(ingredients.map(ing => 
-      ing.id === selectedIngredient.id 
-        ? { ...ing, quantity: ing.quantity + parseInt(adjustmentQty) }
-        : ing
-    ));
-
-    toast.success(`Added ${adjustmentQty} ${selectedIngredient.unit} of ${selectedIngredient.name}`);
-    setIsAdjustDialogOpen(false);
-    setAdjustmentQty('');
-    setSelectedIngredient(null);
-  };
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              With Min Stock Set
+            </CardTitle>
+            <AlertTriangle className="w-4 h-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {withMinStock.length}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Have minimum stock threshold
+            </p>
+          </CardContent>
+        </Card>
 
   const handleStockOut = () => {
     if (!selectedIngredient || !adjustmentQty || parseInt(adjustmentQty) <= 0) {

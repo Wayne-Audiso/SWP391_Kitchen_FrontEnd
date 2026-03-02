@@ -79,21 +79,36 @@ export function Recipes() {
   const [deleteTarget, setDeleteTarget] = useState<RecipeDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+//tai cong thuc va nguyen lieu
+useEffect(() => {
+    Promise.all([loadRecipes(), loadIngredients()]);
+  }, []);
 
-const initialRecipes: Recipe[] = [
-  {
-    id: 'RCP-001',
-    productName: 'Fresh Bread',
-    description: 'Traditional Vietnamese fresh bread',
-    ingredients: [
-      { name: 'Wheat Flour', quantity: 500, unit: 'g' },
-      { name: 'Water', quantity: 300, unit: 'ml' },
-      { name: 'Yeast', quantity: 10, unit: 'g' },
-      { name: 'Sugar', quantity: 20, unit: 'g' },
-      { name: 'Salt', quantity: 8, unit: 'g' },
-    ],
-    shelfLife: '24 hours at room temp',
-  },
+  const loadRecipes = async () => {
+    try {
+      setLoading(true);
+      const data = await recipesApi.getAll();
+      setRecipes(data);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadIngredients = async () => {
+    try {
+      const data = await ingredientsApi.getAll();
+      setAllIngredients(data);
+    } catch {}
+  };
+
+  const computedCost = lines.reduce(
+    (sum, l) => sum + (l.quantity ?? 0) * (l.price ?? 0),
+    0,
+  );
+
+
   {
     id: 'RCP-002',
     productName: 'Croissant',

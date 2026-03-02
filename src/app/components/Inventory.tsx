@@ -1,24 +1,82 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/app/components/ui/dialog';
-import { Package, AlertTriangle, Search, TrendingDown, Plus, Minus } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/components/ui/table";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/app/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/app/components/ui/alert-dialog";
+import {
+  Package,
+  AlertTriangle,
+  Search,
+  TrendingDown,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  ingredientsApi,
+  type IngredientDto,
+  type CreateIngredientModel,
+} from "@/app/services/inventoryService";
 
-interface Ingredient {
-  id: string;
-  name: string;
-  unit: string;
-  quantity: number;
-  minStock: number;
-  location: string;
-  storageCondition: string;
-}
+//khởi tạo state và model cho Inventory
+const emptyForm: CreateIngredientModel = {
+  ingredientName: "",
+  unit: "",
+  storageCondition: "",
+  minStock: undefined,
+  price: undefined,
+};
+
+export function Inventory() {
+  const [ingredients, setIngredients] = useState<IngredientDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<CreateIngredientModel>(emptyForm);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<IngredientDto | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
 interface Product {
   id: string;

@@ -39,7 +39,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
-
+// Xử ly dang nhap
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

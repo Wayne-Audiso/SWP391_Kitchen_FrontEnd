@@ -170,20 +170,23 @@ const handleDelete = async () => {
       i.ingredientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(i.ingredientId).includes(searchTerm),
   );
-
-export function Inventory() {
-  const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
-  const [adjustmentQty, setAdjustmentQty] = useState('');
-  const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
-
-  const handleStockIn = () => {
-    if (!selectedIngredient || !adjustmentQty || parseInt(adjustmentQty) <= 0) {
-      toast.error('Please enter a valid quantity');
-      return;
-    }
+//tieu de trang
+return (
+    <div className="p-8">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">
+            Inventory Management
+          </h2>
+          <p className="text-gray-600 mt-2">
+            Manage ingredients catalog and stock information
+          </p>
+        </div>
+        <Button className="gap-2" onClick={openCreate}>
+          <Plus className="w-4 h-4" />
+          Add Ingredient
+        </Button>
+      </div>
 
     setIngredients(ingredients.map(ing => 
       ing.id === selectedIngredient.id 

@@ -479,265 +479,35 @@ return (
       </DialogContent>
     </Dialog>
 
-  return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Inventory Management</h2>
-        <p className="text-gray-600 mt-2">Track ingredients and products in stock</p>
-      </div>
-
-      {/* Alert Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Low Stock Ingredients</CardTitle>
-            <AlertTriangle className="w-4 h-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{getLowStockIngredients().length}</div>
-            <p className="text-xs text-gray-600 mt-1">Requires immediate restocking</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Ingredients</CardTitle>
-            <Package className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{ingredients.length}</div>
-            <p className="text-xs text-gray-600 mt-1">Different ingredient types</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Products</CardTitle>
-            <TrendingDown className="w-4 h-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products.reduce((sum, p) => sum + p.quantity, 0)}</div>
-            <p className="text-xs text-gray-600 mt-1">Product units in stock</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search ingredients or products..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Adjustment Dialog */}
-      <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adjust Stock - {selectedIngredient?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Current Stock</p>
-              <p className="text-2xl font-bold">{selectedIngredient?.quantity} {selectedIngredient?.unit}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>Quantity to Adjust</Label>
-              <Input 
-                type="number" 
-                placeholder="Enter quantity"
-                value={adjustmentQty}
-                onChange={(e) => setAdjustmentQty(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => {
-              setIsAdjustDialogOpen(false);
-              setAdjustmentQty('');
-              setSelectedIngredient(null);
-            }}>
-              Cancel
-            </Button>
-            <Button variant="outline" onClick={handleStockOut} className="gap-2">
-              <Minus className="w-4 h-4" />
-              Stock Out
-            </Button>
-            <Button onClick={handleStockIn} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Stock In
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Tabs */}
-      <Tabs defaultValue="ingredients" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="ingredients">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ingredient List</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Ingredient Name</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Min Stock</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Storage Condition</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredIngredients.map((ingredient) => (
-                    <TableRow key={ingredient.id} className={ingredient.quantity < ingredient.minStock ? 'bg-red-50' : ''}>
-                      <TableCell className="font-medium">{ingredient.id}</TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        {ingredient.name}
-                        {ingredient.quantity < ingredient.minStock && (
-                          <AlertTriangle className="w-4 h-4 text-red-600" />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className={ingredient.quantity < ingredient.minStock ? 'text-red-600 font-semibold' : ''}>
-                          {ingredient.quantity}
-                        </span>
-                      </TableCell>
-                      <TableCell>{ingredient.unit}</TableCell>
-                      <TableCell>{ingredient.minStock}</TableCell>
-                      <TableCell>{ingredient.location}</TableCell>
-                      <TableCell>{ingredient.storageCondition}</TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => {
-                            setSelectedIngredient(ingredient);
-                            setIsAdjustDialogOpen(true);
-                          }}
-                        >
-                          Adjust Stock
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="products">
-          <Card>
-            <CardHeader>
-              <CardTitle>Product List</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product ID</TableHead>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.id}</TableCell>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.type}</TableCell>
-                      <TableCell>{product.quantity}</TableCell>
-                      <TableCell>{product.unit}</TableCell>
-                      <TableCell>{getStatusBadge(product.status)}</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="low-stock">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                Urgent Restocking Required
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Ingredient Name</TableHead>
-                    <TableHead>Current Stock</TableHead>
-                    <TableHead>Min Stock</TableHead>
-                    <TableHead>Shortage</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {getLowStockIngredients().map((ingredient) => (
-                    <TableRow key={ingredient.id} className="bg-red-50">
-                      <TableCell className="font-medium">{ingredient.id}</TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                        {ingredient.name}
-                      </TableCell>
-                      <TableCell className="text-red-600 font-semibold">
-                        {ingredient.quantity} {ingredient.unit}
-                      </TableCell>
-                      <TableCell>{ingredient.minStock} {ingredient.unit}</TableCell>
-                      <TableCell className="text-red-600 font-semibold">
-                        {ingredient.minStock - ingredient.quantity} {ingredient.unit}
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          size="sm" 
-                          className="bg-red-600 hover:bg-red-700"
-                          onClick={() => {
-                            setSelectedIngredient(ingredient);
-                            setAdjustmentQty(String(ingredient.minStock - ingredient.quantity));
-                            setIsAdjustDialogOpen(true);
-                          }}
-                        >
-                          Restock Now
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
+ {/* --- SECTION: Delete Confirmation Dialog --- 
+        Mô tả: Cảnh báo xác nhận trước khi xóa nguyên liệu
+    */}
+    <AlertDialog
+      open={!!deleteTarget}
+      onOpenChange={(open) => {
+        if (!open && !deleting) setDeleteTarget(null);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Ingredient</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete <strong>{deleteTarget?.ingredientName}</strong>? 
+            This action cannot be undone and will also remove it from all recipes.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </div>
+);

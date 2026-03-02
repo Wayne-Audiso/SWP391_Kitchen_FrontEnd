@@ -78,14 +78,38 @@ export function Inventory() {
   const [deleteTarget, setDeleteTarget] = useState<IngredientDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-interface Product {
-  id: string;
-  name: string;
-  type: string;
-  quantity: number;
-  unit: string;
-  status: 'available' | 'low-stock' | 'out-of-stock';
-}
+useEffect(() => {
+    loadIngredients();
+  }, []);
+
+  const loadIngredients = async () => {
+    try {
+      setLoading(true);
+      const data = await ingredientsApi.getAll();
+      setIngredients(data);
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setIsFormOpen(true);
+  };
+
+  const openEdit = (ing: IngredientDto) => {
+    setEditingId(ing.ingredientId);
+    setForm({
+      ingredientName: ing.ingredientName,
+      unit: ing.unit ?? "",
+      storageCondition: ing.storageCondition ?? "",
+      minStock: ing.minStock,
+      price: ing.price,
+    });
+    setIsFormOpen(true);
+  };
 
 const initialIngredients: Ingredient[] = [
   { id: 'ING-001', name: 'Wheat Flour', unit: 'kg', quantity: 15, minStock: 50, location: 'Storage A-01', storageCondition: 'Dry, room temp' },

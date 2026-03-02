@@ -138,32 +138,36 @@ useEffect(() => {
     setIsFormOpen(true);
   };
 
-
-export function Recipes() {
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  
-  const [newRecipe, setNewRecipe] = useState({
-    productName: '',
-    description: '',
-    shelfLife: '',
-  });
-
-  const [newIngredient, setNewIngredient] = useState({
-    name: '',
-    quantity: '',
-    unit: 'g',
-  });
-
-  const [tempIngredients, setTempIngredients] = useState<{ name: string; quantity: number; unit: string }[]>([]);
-
-  const handleAddIngredient = () => {
-    if (!newIngredient.name || !newIngredient.quantity) {
-      toast.error('Please fill in ingredient details');
+//them so luong
+const handleAddLine = () => {
+    if (!selectedIngId) {
+      toast.error("Please select an ingredient");
       return;
     }
+    const qty = parseFloat(lineQty);
+    if (!lineQty || isNaN(qty) || qty <= 0) {
+      toast.error("Please enter a valid quantity");
+      return;
+    }
+    if (lines.some((l) => l.ingredientId === Number(selectedIngId))) {
+      toast.error("Ingredient already added");
+      return;
+    }
+    const ing = allIngredients.find(
+      (i) => i.ingredientId === Number(selectedIngId),
+    )!;
+    setLines((prev) => [
+      ...prev,
+      {
+        ingredientId: ing.ingredientId,
+        quantity: qty,
+        ingredientName: ing.ingredientName,
+        unit: ing.unit,
+        price: ing.price,
+      },
+    ]);
+
+
 
     setTempIngredients([
       ...tempIngredients,

@@ -138,12 +138,38 @@ const handleSubmit = async () => {
     }
   };
 
-const initialProducts: Product[] = [
-  { id: 'PRD-001', name: 'Fresh Bread', type: 'Bread', quantity: 245, unit: 'pcs', status: 'available' },
-  { id: 'PRD-002', name: 'Croissant', type: 'Pastry', quantity: 18, unit: 'pcs', status: 'low-stock' },
-  { id: 'PRD-003', name: 'Plain Pizza', type: 'Pizza', quantity: 0, unit: 'pcs', status: 'out-of-stock' },
-  { id: 'PRD-004', name: 'Sandwich', type: 'Bread', quantity: 156, unit: 'pcs', status: 'available' },
-];
+// xoa du lieu
+const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      const message = await ingredientsApi.delete(deleteTarget.ingredientId);
+      setIngredients((prev) =>
+        prev.filter((i) => i.ingredientId !== deleteTarget.ingredientId),
+      );
+      toast.success(message);
+      setDeleteTarget(null);
+    } catch {
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const withMinStock = ingredients.filter(
+    (i) => i.minStock != null && i.minStock > 0,
+  );
+
+  const filtered = ingredients.filter(
+    (i) =>
+      i.ingredientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(i.ingredientId).includes(searchTerm),
+  );
+
+  const filteredWithMinStock = withMinStock.filter(
+    (i) =>
+      i.ingredientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(i.ingredientId).includes(searchTerm),
+  );
 
 export function Inventory() {
   const [ingredients, setIngredients] = useState<Ingredient[]>(initialIngredients);

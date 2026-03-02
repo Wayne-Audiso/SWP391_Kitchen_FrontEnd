@@ -78,6 +78,7 @@ export function Inventory() {
   const [deleteTarget, setDeleteTarget] = useState<IngredientDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+//xu ly logic load du lieu (them xoa sua)
 useEffect(() => {
     loadIngredients();
   }, []);
@@ -111,13 +112,31 @@ useEffect(() => {
     setIsFormOpen(true);
   };
 
-const initialIngredients: Ingredient[] = [
-  { id: 'ING-001', name: 'Wheat Flour', unit: 'kg', quantity: 15, minStock: 50, location: 'Storage A-01', storageCondition: 'Dry, room temp' },
-  { id: 'ING-002', name: 'Sugar', unit: 'kg', quantity: 85, minStock: 30, location: 'Storage A-02', storageCondition: 'Dry' },
-  { id: 'ING-003', name: 'Butter', unit: 'kg', quantity: 12, minStock: 20, location: 'Cold Storage B-01', storageCondition: '4-8°C' },
-  { id: 'ING-004', name: 'Eggs', unit: 'pcs', quantity: 350, minStock: 200, location: 'Cold Storage B-02', storageCondition: '4-8°C' },
-  { id: 'ING-005', name: 'Fresh Milk', unit: 'L', quantity: 28, minStock: 40, location: 'Cold Storage B-03', storageCondition: '2-4°C' },
-];
+  //submit du lieu
+const handleSubmit = async () => {
+    if (!form.ingredientName.trim()) {
+      toast.error("Ingredient name is required");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      if (editingId === null) {
+        const { data, message } = await ingredientsApi.create(form);
+        setIngredients((prev) => [...prev, data]);
+        toast.success(message);
+      } else {
+        const { data, message } = await ingredientsApi.update(editingId, form);
+        setIngredients((prev) =>
+          prev.map((i) => (i.ingredientId === editingId ? data : i)),
+        );
+        toast.success(message);
+      }
+      setIsFormOpen(false);
+    } catch {
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
 const initialProducts: Product[] = [
   { id: 'PRD-001', name: 'Fresh Bread', type: 'Bread', quantity: 245, unit: 'pcs', status: 'available' },

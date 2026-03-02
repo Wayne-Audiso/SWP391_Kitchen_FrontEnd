@@ -167,30 +167,24 @@ const handleAddLine = () => {
       },
     ]);
 
-
-
-    setTempIngredients([
-      ...tempIngredients,
-      {
-        name: newIngredient.name,
-        quantity: parseFloat(newIngredient.quantity),
-        unit: newIngredient.unit,
-      },
-    ]);
-
-    setNewIngredient({ name: '', quantity: '', unit: 'g' });
+  //xoa them dong
+setSelectedIngId("");
+    setLineQty("");
   };
 
-  const handleRemoveIngredient = (index: number) => {
-    setTempIngredients(tempIngredients.filter((_, i) => i !== index));
+  const handleRemoveLine = (id: number) => {
+    setLines((prev) => prev.filter((l) => l.ingredientId !== id));
   };
 
-  const handleCreateRecipe = () => {
-    if (!newRecipe.productName || !newRecipe.description || tempIngredients.length === 0) {
-      toast.error('Please fill in all fields and add at least one ingredient');
-      return;
-    }
-
+  const handleUpdateLineQty = (id: number, val: string) => {
+    setLines((prev) =>
+      prev.map((l) =>
+        l.ingredientId === id
+          ? { ...l, quantity: val ? parseFloat(val) : undefined }
+          : l,
+      ),
+    );
+  };
     const recipe: Recipe = {
       id: `RCP-${String(recipes.length + 1).padStart(3, '0')}`,
       productName: newRecipe.productName,

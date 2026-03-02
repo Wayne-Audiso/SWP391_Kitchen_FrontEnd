@@ -221,6 +221,27 @@ setSelectedIngId("");
     }
   };
 
+  //xoa san pham
+const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      const message = await recipesApi.delete(deleteTarget.recipeId);
+      setRecipes((prev) =>
+        prev.filter((r) => r.recipeId !== deleteTarget.recipeId),
+      );
+      toast.success(message);
+      setDeleteTarget(null);
+    } catch {
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const availableIngredients = allIngredients.filter(
+    (ing) => !lines.some((l) => l.ingredientId === ing.ingredientId),
+  );
+
   return (
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">

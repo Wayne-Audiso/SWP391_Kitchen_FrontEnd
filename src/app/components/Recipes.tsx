@@ -108,36 +108,36 @@ useEffect(() => {
     0,
   );
 
+//mo cac chuc nang 
+ const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setLines([]);
+    setSelectedIngId("");
+    setLineQty("");
+    setIsFormOpen(true);
+  };
 
-  {
-    id: 'RCP-002',
-    productName: 'Croissant',
-    description: 'French-style croissant',
-    ingredients: [
-      { name: 'Wheat Flour', quantity: 400, unit: 'g' },
-      { name: 'Butter', quantity: 250, unit: 'g' },
-      { name: 'Fresh Milk', quantity: 150, unit: 'ml' },
-      { name: 'Sugar', quantity: 50, unit: 'g' },
-      { name: 'Yeast', quantity: 8, unit: 'g' },
-      { name: 'Salt', quantity: 10, unit: 'g' },
-    ],
-    shelfLife: '48 hours at room temp',
-  },
-  {
-    id: 'RCP-003',
-    productName: 'Basic Pizza',
-    description: 'Traditional Italian pizza dough',
-    ingredients: [
-      { name: 'Wheat Flour', quantity: 600, unit: 'g' },
-      { name: 'Water', quantity: 350, unit: 'ml' },
-      { name: 'Yeast', quantity: 12, unit: 'g' },
-      { name: 'Olive Oil', quantity: 30, unit: 'ml' },
-      { name: 'Sugar', quantity: 10, unit: 'g' },
-      { name: 'Salt', quantity: 10, unit: 'g' },
-    ],
-    shelfLife: '3 days refrigerated',
-  },
-];
+  const openEdit = (recipe: RecipeDto) => {
+    setEditingId(recipe.recipeId);
+    setForm({
+      recipeName: recipe.recipeName,
+      description: recipe.description ?? "",
+    });
+    setLines(
+      recipe.ingredients.map((ri) => ({
+        ingredientId: ri.ingredientId,
+        quantity: ri.quantity,
+        ingredientName: ri.ingredientName,
+        unit: ri.unit,
+        price: ri.price,
+      })),
+    );
+    setSelectedIngId("");
+    setLineQty("");
+    setIsFormOpen(true);
+  };
+
 
 export function Recipes() {
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);

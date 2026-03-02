@@ -256,23 +256,150 @@ return (
           />
         </div>
       </div>
+{/* --- SECTION: Content Tabs & Data Tables --- 
+        Mô tả: Chuyển đổi giữa danh sách tất cả nguyên liệu và cấu hình tồn kho tối thiểu
+    */}
+   <Tabs defaultValue="ingredients" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="ingredients">All Ingredients</TabsTrigger>
+        <TabsTrigger value="min-stock">Min Stock Config</TabsTrigger>
+      </TabsList>
 
-    setIngredients(ingredients.map(ing => 
-      ing.id === selectedIngredient.id 
-        ? { ...ing, quantity: ing.quantity - parseInt(adjustmentQty) }
-        : ing
-    ));
+      {/* Tab: All Ingredients */}
+      <TabsContent value="ingredients">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ingredient List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Loading...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Ingredient Name</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Min Stock</TableHead>
+                    <TableHead>Unit Price</TableHead>
+                    <TableHead>Storage Condition</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-gray-400 py-8">
+                        No ingredients found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((ing) => (
+                      <TableRow key={ing.ingredientId}>
+                        <TableCell className="font-medium text-gray-500">#{ing.ingredientId}</TableCell>
+                        <TableCell className="font-medium">{ing.ingredientName}</TableCell>
+                        <TableCell>{ing.unit ?? <span className="text-gray-400">—</span>}</TableCell>
+                        <TableCell>
+                          {ing.minStock != null ? (
+                            <Badge className="bg-yellow-100 text-yellow-700">{ing.minStock}</Badge>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {ing.price != null ? (
+                            <span className="text-green-700 font-medium">
+                              {ing.price.toLocaleString("vi-VN")} ₫
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{ing.storageCondition ?? <span className="text-gray-400">—</span>}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={() => openEdit(ing)}>
+                              <Pencil className="w-3 h-3 mr-1" /> Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => setDeleteTarget(ing)}
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" /> Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-    toast.success(`Removed ${adjustmentQty} ${selectedIngredient.unit} of ${selectedIngredient.name}`);
-    setIsAdjustDialogOpen(false);
-    setAdjustmentQty('');
-    setSelectedIngredient(null);
-  };
-
-  const getLowStockIngredients = () => {
-    return ingredients.filter(ing => ing.quantity < ing.minStock);
-  };
-
+      {/* Tab: Min Stock Config */}
+      <TabsContent value="min-stock">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              Ingredients with Minimum Stock Threshold
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Ingredient Name</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Min Stock</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredWithMinStock.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                      No ingredients with min stock configured
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredWithMinStock.map((ing) => (
+                    <TableRow key={ing.ingredientId} className="bg-yellow-50">
+                      <TableCell className="font-medium text-gray-500">#{ing.ingredientId}</TableCell>
+                      <TableCell className="font-medium flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                        {ing.ingredientName}
+                      </TableCell>
+                      <TableCell>{ing.unit ?? "—"}</TableCell>
+                      <TableCell className="font-semibold text-yellow-700">{ing.minStock}</TableCell>
+                      <TableCell>
+                        {ing.price != null ? `${ing.price.toLocaleString("vi-VN")} ₫` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" onClick={() => openEdit(ing)}>
+                          <Pencil className="w-3 h-3 mr-1" /> Edit
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       'available': { label: 'Available', className: 'bg-green-100 text-green-700' },

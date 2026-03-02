@@ -242,17 +242,20 @@ return (
           </CardContent>
         </Card>
       </div>
-
-  const handleStockOut = () => {
-    if (!selectedIngredient || !adjustmentQty || parseInt(adjustmentQty) <= 0) {
-      toast.error('Please enter a valid quantity');
-      return;
-    }
-
-    if (selectedIngredient.quantity < parseInt(adjustmentQty)) {
-      toast.error('Insufficient stock');
-      return;
-    }
+{/* --- SECTION: Search Bar --- 
+        Mô tả: Ô tìm kiếm nguyên liệu theo tên hoặc ID
+    */}
+  <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Search by name or ID..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
     setIngredients(ingredients.map(ing => 
       ing.id === selectedIngredient.id 

@@ -187,10 +187,10 @@ return (
           Add Ingredient
         </Button>
       </div>
-      {/* 
-       Ô tìm kiếm nguyên liệu theo tên hoặc ID
+      {/*  
+        Các thẻ hiển thị chỉ số tổng quan (Tổng số, mức tồn kho tối thiểu, giá)
     */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -224,6 +224,24 @@ return (
             </p>
           </CardContent>
         </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              With Price Set
+            </CardTitle>
+            <TrendingDown className="w-4 h-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {ingredients.filter((i) => i.price != null).length}
+            </div>
+            <p className="text-xs text-gray-600 mt-1">
+              Ingredients with unit price
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
   const handleStockOut = () => {
     if (!selectedIngredient || !adjustmentQty || parseInt(adjustmentQty) <= 0) {

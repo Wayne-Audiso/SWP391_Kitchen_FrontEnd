@@ -400,25 +400,84 @@ return (
         </Card>
       </TabsContent>
     </Tabs>
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      'available': { label: 'Available', className: 'bg-green-100 text-green-700' },
-      'low-stock': { label: 'Low Stock', className: 'bg-yellow-100 text-yellow-700' },
-      'out-of-stock': { label: 'Out of Stock', className: 'bg-red-100 text-red-700' },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
-
-  const filteredIngredients = ingredients.filter(ing => 
-    ing.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ing.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredProducts = products.filter(prod => 
-    prod.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prod.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+ {/* --- SECTION: Create/Edit Modal --- 
+        Mô tả: Form Dialog để thêm mới hoặc cập nhật thông tin nguyên liệu
+    */}
+    <Dialog
+      open={isFormOpen}
+      onOpenChange={(open) => {
+        if (!submitting) setIsFormOpen(open);
+      }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {editingId === null ? "Add New Ingredient" : "Edit Ingredient"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1">
+            <Label>Ingredient Name <span className="text-red-500">*</span></Label>
+            <Input
+              placeholder="e.g. Wheat Flour"
+              value={form.ingredientName}
+              onChange={(e) => setForm((f) => ({ ...f, ingredientName: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Unit</Label>
+              <Input
+                placeholder="kg / L / pcs"
+                value={form.unit ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Min Stock</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={form.minStock ?? ""}
+                onChange={(e) => setForm((f) => ({
+                  ...f,
+                  minStock: e.target.value ? Number(e.target.value) : undefined,
+                }))}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Unit Price (VND)</Label>
+            <Input
+              type="number"
+              placeholder="0"
+              value={form.price ?? ""}
+              onChange={(e) => setForm((f) => ({
+                ...f,
+                price: e.target.value ? Number(e.target.value) : undefined,
+              }))}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label>Storage Condition</Label>
+            <Input
+              placeholder="e.g. Dry, room temp / 4-8°C"
+              value={form.storageCondition ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, storageCondition: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 pt-2">
+          <Button variant="outline" onClick={() => setIsFormOpen(false)} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {editingId === null ? "Create" : "Save Changes"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
 
   return (
     <div className="p-8">

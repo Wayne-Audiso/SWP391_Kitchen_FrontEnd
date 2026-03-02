@@ -167,7 +167,7 @@ const handleAddLine = () => {
       },
     ]);
 
-  //xoa them dong
+  //xoa,them dong
 setSelectedIngId("");
     setLineQty("");
   };
@@ -185,19 +185,40 @@ setSelectedIngId("");
       ),
     );
   };
-    const recipe: Recipe = {
-      id: `RCP-${String(recipes.length + 1).padStart(3, '0')}`,
-      productName: newRecipe.productName,
-      description: newRecipe.description,
-      ingredients: tempIngredients,
-      shelfLife: newRecipe.shelfLife,
-    };
 
-    setRecipes([...recipes, recipe]);
-    setIsCreateDialogOpen(false);
-    setNewRecipe({ productName: '', description: '', shelfLife: '' });
-    setTempIngredients([]);
-    toast.success('Recipe created successfully!');
+  //submit san pham
+    const handleSubmit = async () => {
+    if (!form.recipeName.trim()) {
+      toast.error("Recipe name is required");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const payload = {
+        recipeName: form.recipeName,
+        description: form.description || undefined,
+        ingredients: lines.map((l) => ({
+          ingredientId: l.ingredientId,
+          quantity: l.quantity,
+        })),
+      };
+
+      if (editingId === null) {
+        const { data, message } = await recipesApi.create(payload);
+        setRecipes((prev) => [data, ...prev]);
+        toast.success(message);
+      } else {
+        const { data, message } = await recipesApi.update(editingId, payload);
+        setRecipes((prev) =>
+          prev.map((r) => (r.recipeId === editingId ? data : r)),
+        );
+        toast.success(message);
+      }
+      setIsFormOpen(false);
+    } catch {
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

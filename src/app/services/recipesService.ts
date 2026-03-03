@@ -1,46 +1,69 @@
 import { api } from '@/app/utils/apiClient';
-import type {
-  ApiResponse,
-  PaginatedResponse,
-  Recipe,
-  CreateRecipeDto,
-} from '@/app/utils/apiTypes';
+import type { ApiResult } from '@/app/utils/apiTypes';
+
+// ── Types khớp với backend DTOs ───────────────────────────────────────────────
+
+export interface RecipeIngredientDto {
+  recipeIngredientId: number;
+  ingredientId: number;
+  ingredientName: string;
+  unit?: string;
+  price?: number;
+  quantity?: number;
+  totalCost?: number;
+}
+
+export interface RecipeDto {
+  recipeId: number;
+  recipeName: string;
+  description?: string;
+  createdDate?: string;
+  totalCost: number;
+  ingredients: RecipeIngredientDto[];
+}
+
+export interface CreateRecipeIngredientModel {
+  ingredientId: number;
+  quantity?: number;
+}
+
+export interface CreateRecipeModel {
+  recipeName: string;
+  description?: string;
+  ingredients: CreateRecipeIngredientModel[];
+}
+
+export interface UpdateRecipeModel {
+  recipeName: string;
+  description?: string;
+  ingredients: CreateRecipeIngredientModel[];
+}
+
+// ── Recipes API: /api/recipes ─────────────────────────────────────────────────
 
 export const recipesApi = {
-  getAll: async (params?: { page?: number; pageSize?: number; category?: string }): Promise<PaginatedResponse<Recipe>> => {
-    const response = await api.get<PaginatedResponse<Recipe>>('/recipes', { params });
-    return response.data;
+  getAll: async (): Promise<RecipeDto[]> => {
+    const res = await api.get<ApiResult<RecipeDto[]>>('/recipes');
+    return res.data.data ?? [];
   },
 
-  getById: async (id: string): Promise<ApiResponse<Recipe>> => {
-    const response = await api.get<ApiResponse<Recipe>>(`/recipes/${id}`);
-    return response.data;
+  getById: async (id: number): Promise<RecipeDto> => {
+    const res = await api.get<ApiResult<RecipeDto>>(`/recipes/${id}`);
+    return res.data.data!;
   },
 
-  create: async (data: CreateRecipeDto): Promise<ApiResponse<Recipe>> => {
-    const response = await api.post<ApiResponse<Recipe>>('/recipes', data);
-    return response.data;
+  create: async (data: CreateRecipeModel): Promise<{ data: RecipeDto; message: string }> => {
+    const res = await api.post<ApiResult<RecipeDto>>('/recipes', data);
+    return { data: res.data.data!, message: res.data.message ?? 'Tạo công thức thành công' };
   },
 
-  update: async (id: string, data: Partial<CreateRecipeDto>): Promise<ApiResponse<Recipe>> => {
-    const response = await api.patch<ApiResponse<Recipe>>(`/recipes/${id}`, data);
-    return response.data;
+  update: async (id: number, data: UpdateRecipeModel): Promise<{ data: RecipeDto; message: string }> => {
+    const res = await api.put<ApiResult<RecipeDto>>(`/recipes/${id}`, data);
+    return { data: res.data.data!, message: res.data.message ?? 'Cập nhật công thức thành công' };
   },
 
-  delete: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await api.delete<ApiResponse<null>>(`/recipes/${id}`);
-    return response.data;
-  },
-
-  // Categories
-  getCategories: async (): Promise<ApiResponse<string[]>> => {
-    const response = await api.get<ApiResponse<string[]>>('/recipes/categories');
-    return response.data;
-  },
-
-  // Recipe Costing
-  calculateCost: async (id: string): Promise<ApiResponse<{ totalCost: number; costPerServing: number }>> => {
-    const response = await api.get<ApiResponse<{ totalCost: number; costPerServing: number }>>(`/recipes/${id}/cost`);
-    return response.data;
+  delete: async (id: number): Promise<string> => {
+    const res = await api.delete<ApiResult<boolean>>(`/recipes/${id}`);
+    return res.data.message ?? 'Xóa công thức thành công';
   },
 };

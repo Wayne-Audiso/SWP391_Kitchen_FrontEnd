@@ -1,85 +1,146 @@
 import { api } from '@/app/utils/apiClient';
-import type {
-  ApiResponse,
-  PaginatedResponse,
-  Order,
-  Shipment,
-  CreateOrderDto,
-  UpdateOrderStatusDto,
-} from '@/app/utils/apiTypes';
+import type { ApiResult } from '@/app/utils/apiTypes';
 
-export const ordersApi = {
-  // Orders
-  getOrders: async (params?: { page?: number; pageSize?: number; status?: string; franchiseStore?: string }): Promise<PaginatedResponse<Order>> => {
-    const response = await api.get<PaginatedResponse<Order>>('/orders', { params });
-    return response.data;
+// ── Types khớp với backend StoreOrderDto ─────────────────────────────────────
+
+export interface StoreOrderDto {
+  storeOrderId: number;
+  centralKitchenId: number;
+  kitchenName?: string;
+  franchiseStoreId: number;
+  storeName?: string;
+  orderDate?: string;
+  status?: string;
+  quantity?: number;
+  deliveryDate?: string;
+}
+
+export interface CreateStoreOrderModel {
+  centralKitchenId: number;
+  franchiseStoreId: number;
+  quantity?: number;
+  deliveryDate?: string;
+}
+
+export interface UpdateStoreOrderStatusModel {
+  /** Luồng: Pending → Approved / Rejected → InProduction → InDelivery → Completed */
+  status: string;
+}
+
+// ── Types khớp với backend ShipmentDto ────────────────────────────────────────
+
+export interface ShipmentLineDto {
+  shipmentLineId: number;
+  productId: number;
+  productName?: string;
+  shippedQuantity?: number;
+  receivedQuantity?: number;
+  damagedQuantity?: number;
+}
+
+export interface ShipmentDto {
+  shipmentId: number;
+  storeOrderId: number;
+  centralKitchenId: number;
+  kitchenName?: string;
+  shipmentDate?: string;
+  deliveryStatus?: string;
+  receivedDate?: string;
+  lines: ShipmentLineDto[];
+}
+
+export interface CreateShipmentLineModel {
+  productId: number;
+  shippedQuantity?: number;
+}
+
+export interface CreateShipmentModel {
+  storeOrderId: number;
+  centralKitchenId: number;
+  lines: CreateShipmentLineModel[];
+}
+
+export interface UpdateShipmentStatusModel {
+  deliveryStatus: string;
+}
+
+export interface ReceiveShipmentLineModel {
+  shipmentLineId: number;
+  receivedQuantity?: number;
+  damagedQuantity?: number;
+}
+
+export interface ReceiveShipmentModel {
+  lines: ReceiveShipmentLineModel[];
+}
+
+// ── Store Orders API: /api/store-orders ──────────────────────────────────────
+
+export const storeOrdersApi = {
+  getAll: async (): Promise<StoreOrderDto[]> => {
+    const res = await api.get<ApiResult<StoreOrderDto[]>>('/store-orders');
+    return res.data.data ?? [];
   },
 
-  getOrderById: async (id: string): Promise<ApiResponse<Order>> => {
-    const response = await api.get<ApiResponse<Order>>(`/orders/${id}`);
-    return response.data;
+  getById: async (id: number): Promise<StoreOrderDto> => {
+    const res = await api.get<ApiResult<StoreOrderDto>>(`/store-orders/${id}`);
+    return res.data.data!;
   },
 
-  createOrder: async (data: CreateOrderDto): Promise<ApiResponse<Order>> => {
-    const response = await api.post<ApiResponse<Order>>('/orders', data);
-    return response.data;
+  getByStore: async (storeId: number): Promise<StoreOrderDto[]> => {
+    const res = await api.get<ApiResult<StoreOrderDto[]>>(`/store-orders/by-store/${storeId}`);
+    return res.data.data ?? [];
   },
 
-  updateOrderStatus: async (id: string, data: UpdateOrderStatusDto): Promise<ApiResponse<Order>> => {
-    const response = await api.patch<ApiResponse<Order>>(`/orders/${id}/status`, data);
-    return response.data;
+  create: async (data: CreateStoreOrderModel): Promise<StoreOrderDto> => {
+    const res = await api.post<ApiResult<StoreOrderDto>>('/store-orders', data);
+    return res.data.data!;
   },
 
-  deleteOrder: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await api.delete<ApiResponse<null>>(`/orders/${id}`);
-    return response.data;
+  updateStatus: async (id: number, data: UpdateStoreOrderStatusModel): Promise<StoreOrderDto> => {
+    const res = await api.put<ApiResult<StoreOrderDto>>(`/store-orders/${id}/status`, data);
+    return res.data.data!;
   },
 
-  // Order Workflow
-  processOrder: async (id: string): Promise<ApiResponse<Order>> => {
-    const response = await api.post<ApiResponse<Order>>(`/orders/${id}/process`);
-    return response.data;
+  delete: async (id: number): Promise<void> => {
+    await api.delete<ApiResult<boolean>>(`/store-orders/${id}`);
+  },
+};
+
+// ── Shipments API: /api/shipments ─────────────────────────────────────────────
+
+export const shipmentsApi = {
+  getAll: async (): Promise<ShipmentDto[]> => {
+    const res = await api.get<ApiResult<ShipmentDto[]>>('/shipments');
+    return res.data.data ?? [];
   },
 
-  shipOrder: async (id: string): Promise<ApiResponse<Order>> => {
-    const response = await api.post<ApiResponse<Order>>(`/orders/${id}/ship`);
-    return response.data;
+  getById: async (id: number): Promise<ShipmentDto> => {
+    const res = await api.get<ApiResult<ShipmentDto>>(`/shipments/${id}`);
+    return res.data.data!;
   },
 
-  deliverOrder: async (id: string): Promise<ApiResponse<Order>> => {
-    const response = await api.post<ApiResponse<Order>>(`/orders/${id}/deliver`);
-    return response.data;
+  getByOrder: async (orderId: number): Promise<ShipmentDto[]> => {
+    const res = await api.get<ApiResult<ShipmentDto[]>>(`/shipments/by-order/${orderId}`);
+    return res.data.data ?? [];
   },
 
-  cancelOrder: async (id: string, reason: string): Promise<ApiResponse<Order>> => {
-    const response = await api.post<ApiResponse<Order>>(`/orders/${id}/cancel`, { reason });
-    return response.data;
+  create: async (data: CreateShipmentModel): Promise<ShipmentDto> => {
+    const res = await api.post<ApiResult<ShipmentDto>>('/shipments', data);
+    return res.data.data!;
   },
 
-  // Shipments
-  getShipments: async (params?: { page?: number; pageSize?: number; status?: string }): Promise<PaginatedResponse<Shipment>> => {
-    const response = await api.get<PaginatedResponse<Shipment>>('/shipments', { params });
-    return response.data;
+  updateStatus: async (id: number, data: UpdateShipmentStatusModel): Promise<ShipmentDto> => {
+    const res = await api.put<ApiResult<ShipmentDto>>(`/shipments/${id}/status`, data);
+    return res.data.data!;
   },
 
-  getShipmentById: async (id: string): Promise<ApiResponse<Shipment>> => {
-    const response = await api.get<ApiResponse<Shipment>>(`/shipments/${id}`);
-    return response.data;
+  receive: async (id: number, data: ReceiveShipmentModel): Promise<ShipmentDto> => {
+    const res = await api.put<ApiResult<ShipmentDto>>(`/shipments/${id}/receive`, data);
+    return res.data.data!;
   },
 
-  updateShipmentStatus: async (id: string, status: string): Promise<ApiResponse<Shipment>> => {
-    const response = await api.patch<ApiResponse<Shipment>>(`/shipments/${id}/status`, { status });
-    return response.data;
-  },
-
-  markShipmentDelivered: async (id: string): Promise<ApiResponse<Shipment>> => {
-    const response = await api.post<ApiResponse<Shipment>>(`/shipments/${id}/delivered`);
-    return response.data;
-  },
-
-  // Get shipments by order
-  getShipmentsByOrder: async (orderId: string): Promise<ApiResponse<Shipment[]>> => {
-    const response = await api.get<ApiResponse<Shipment[]>>(`/orders/${orderId}/shipments`);
-    return response.data;
+  delete: async (id: number): Promise<void> => {
+    await api.delete<ApiResult<boolean>>(`/shipments/${id}`);
   },
 };

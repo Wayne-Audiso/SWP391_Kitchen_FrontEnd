@@ -51,7 +51,6 @@ import {
   type IngredientDto,
 } from "@/app/services/inventoryService";
 
-//tao mau cong thuc 
 interface LineItem extends CreateRecipeIngredientModel {
   ingredientName: string;
   unit?: string;
@@ -79,8 +78,7 @@ export function Recipes() {
   const [deleteTarget, setDeleteTarget] = useState<RecipeDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-//tai cong thuc va nguyen lieu
-useEffect(() => {
+  useEffect(() => {
     Promise.all([loadRecipes(), loadIngredients()]);
   }, []);
 
@@ -108,8 +106,7 @@ useEffect(() => {
     0,
   );
 
-//mo cac chuc nang 
- const openCreate = () => {
+  const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
     setLines([]);
@@ -138,8 +135,7 @@ useEffect(() => {
     setIsFormOpen(true);
   };
 
-//them so luong
-const handleAddLine = () => {
+  const handleAddLine = () => {
     if (!selectedIngId) {
       toast.error("Please select an ingredient");
       return;
@@ -166,9 +162,7 @@ const handleAddLine = () => {
         price: ing.price,
       },
     ]);
-
-  //xoa,them dong
-setSelectedIngId("");
+    setSelectedIngId("");
     setLineQty("");
   };
 
@@ -186,8 +180,7 @@ setSelectedIngId("");
     );
   };
 
-  //submit san pham
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!form.recipeName.trim()) {
       toast.error("Recipe name is required");
       return;
@@ -221,8 +214,7 @@ setSelectedIngId("");
     }
   };
 
-  //xoa san pham
-const handleDelete = async () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       setDeleting(true);
@@ -242,7 +234,6 @@ const handleDelete = async () => {
     (ing) => !lines.some((l) => l.ingredientId === ing.ingredientId),
   );
 
-  //check return
   return (
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">

@@ -1,71 +1,110 @@
 import { api } from '@/app/utils/apiClient';
-import type {
-  ApiResponse,
-  PaginatedResponse,
-  Ingredient,
-  Product,
-  CreateIngredientDto,
-  UpdateInventoryDto,
-} from '@/app/utils/apiTypes';
+import type { ApiResult } from '@/app/utils/apiTypes';
 
-export const inventoryApi = {
-  // Ingredients
-  getIngredients: async (params?: { page?: number; pageSize?: number; status?: string; location?: string }): Promise<PaginatedResponse<Ingredient>> => {
-    const response = await api.get<PaginatedResponse<Ingredient>>('/inventory/ingredients', { params });
-    return response.data;
+// ── Types khớp với backend IngredientDto ─────────────────────────────────────
+
+export interface IngredientDto {
+  ingredientId: number;
+  ingredientName: string;
+  unit?: string;
+  storageCondition?: string;
+  minStock?: number;
+  price?: number;
+}
+
+export interface CreateIngredientModel {
+  ingredientName: string;
+  unit?: string;
+  storageCondition?: string;
+  minStock?: number;
+  price?: number;
+}
+
+export interface UpdateIngredientModel {
+  ingredientName: string;
+  unit?: string;
+  storageCondition?: string;
+  minStock?: number;
+  price?: number;
+}
+
+// ── Types khớp với backend InventoryLocationDto ───────────────────────────────
+
+export interface InventoryLocationDto {
+  inventoryLocationId: number;
+  centralKitchenId: number;
+  kitchenName?: string;
+  name: string;
+  locationType?: string;
+  status?: string;
+  updatedAt?: string;
+}
+
+export interface CreateInventoryLocationModel {
+  centralKitchenId: number;
+  name: string;
+  locationType?: string;
+}
+
+export interface UpdateInventoryLocationModel {
+  name: string;
+  locationType?: string;
+  status?: string;
+}
+
+// ── Ingredients API: /api/ingredients ────────────────────────────────────────
+
+export const ingredientsApi = {
+  getAll: async (): Promise<IngredientDto[]> => {
+    const res = await api.get<ApiResult<IngredientDto[]>>('/ingredients');
+    return res.data.data ?? [];
   },
 
-  getIngredientById: async (id: string): Promise<ApiResponse<Ingredient>> => {
-    const response = await api.get<ApiResponse<Ingredient>>(`/inventory/ingredients/${id}`);
-    return response.data;
+  getById: async (id: number): Promise<IngredientDto> => {
+    const res = await api.get<ApiResult<IngredientDto>>(`/ingredients/${id}`);
+    return res.data.data!;
   },
 
-  createIngredient: async (data: CreateIngredientDto): Promise<ApiResponse<Ingredient>> => {
-    const response = await api.post<ApiResponse<Ingredient>>('/inventory/ingredients', data);
-    return response.data;
+  create: async (data: CreateIngredientModel): Promise<{ data: IngredientDto; message: string }> => {
+    const res = await api.post<ApiResult<IngredientDto>>('/ingredients', data);
+    return { data: res.data.data!, message: res.data.message ?? 'Tạo nguyên liệu thành công' };
   },
 
-  updateIngredient: async (id: string, data: UpdateInventoryDto): Promise<ApiResponse<Ingredient>> => {
-    const response = await api.patch<ApiResponse<Ingredient>>(`/inventory/ingredients/${id}`, data);
-    return response.data;
+  update: async (id: number, data: UpdateIngredientModel): Promise<{ data: IngredientDto; message: string }> => {
+    const res = await api.put<ApiResult<IngredientDto>>(`/ingredients/${id}`, data);
+    return { data: res.data.data!, message: res.data.message ?? 'Cập nhật thành công' };
   },
 
-  deleteIngredient: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await api.delete<ApiResponse<null>>(`/inventory/ingredients/${id}`);
-    return response.data;
+  delete: async (id: number): Promise<string> => {
+    const res = await api.delete<ApiResult<boolean>>(`/ingredients/${id}`);
+    return res.data.message ?? 'Xóa nguyên liệu thành công';
+  },
+};
+
+// ── Inventory Locations API: /api/inventory-locations ────────────────────────
+
+export const inventoryLocationsApi = {
+  getAll: async (): Promise<InventoryLocationDto[]> => {
+    const res = await api.get<ApiResult<InventoryLocationDto[]>>('/inventory-locations');
+    return res.data.data ?? [];
   },
 
-  // Products
-  getProducts: async (params?: { page?: number; pageSize?: number; status?: string; location?: string }): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get<PaginatedResponse<Product>>('/inventory/products', { params });
-    return response.data;
+  getByKitchen: async (kitchenId: number): Promise<InventoryLocationDto[]> => {
+    const res = await api.get<ApiResult<InventoryLocationDto[]>>(`/inventory-locations/by-kitchen/${kitchenId}`);
+    return res.data.data ?? [];
   },
 
-  getProductById: async (id: string): Promise<ApiResponse<Product>> => {
-    const response = await api.get<ApiResponse<Product>>(`/inventory/products/${id}`);
-    return response.data;
+  create: async (data: CreateInventoryLocationModel): Promise<InventoryLocationDto> => {
+    const res = await api.post<ApiResult<InventoryLocationDto>>('/inventory-locations', data);
+    return res.data.data!;
   },
 
-  updateProductStock: async (id: string, quantity: number): Promise<ApiResponse<Product>> => {
-    const response = await api.patch<ApiResponse<Product>>(`/inventory/products/${id}/stock`, { quantity });
-    return response.data;
+  update: async (id: number, data: UpdateInventoryLocationModel): Promise<InventoryLocationDto> => {
+    const res = await api.put<ApiResult<InventoryLocationDto>>(`/inventory-locations/${id}`, data);
+    return res.data.data!;
   },
 
-  // Low Stock Alerts
-  getLowStockItems: async (): Promise<ApiResponse<(Ingredient | Product)[]>> => {
-    const response = await api.get<ApiResponse<(Ingredient | Product)[]>>('/inventory/low-stock');
-    return response.data;
-  },
-
-  // Inventory Locations
-  getLocations: async (): Promise<ApiResponse<string[]>> => {
-    const response = await api.get<ApiResponse<string[]>>('/inventory/locations');
-    return response.data;
-  },
-
-  // Stock Transfer
-  transferStock: async (data: { itemId: string; fromLocation: string; toLocation: string; quantity: number }): Promise<ApiResponse<any>> => {
-    const response = await api.post<ApiResponse<any>>('/inventory/transfer', data);
-    return response.data;
+  delete: async (id: number): Promise<void> => {
+    await api.delete<ApiResult<boolean>>(`/inventory-locations/${id}`);
   },
 };

@@ -1,11 +1,5 @@
 import { api } from "@/app/utils/apiClient";
-import type {
-  ApiResponse,
-  PaginatedResponse,
-  User,
-  CreateUserDto,
-  UpdateUserDto,
-} from "@/app/utils/apiTypes";
+import type { ApiResult } from "@/app/utils/apiTypes";
 
 // Backend login response (khớp với LoginResponseModel)
 export interface LoginApiResponse {
@@ -22,68 +16,31 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
+  role?: string;
 }
 
-// Auth API - gọi đúng endpoint của backend
+// Auth API
 export const authApi = {
+  /**
+   * POST /api/auth/login
+   * Backend trả ApiResult<LoginResponseModel> — service unwrap về LoginApiResponse.
+   */
   login: async (credentials: {
     username: string;
     password: string;
   }): Promise<LoginApiResponse> => {
-    const response = await api.post<LoginApiResponse>(
+    const response = await api.post<ApiResult<LoginApiResponse>>(
       "/auth/login",
       credentials,
     );
-    return response.data;
+    return response.data.data!;
   },
 
-  register: async (data: RegisterRequest): Promise<any> => {
-    const response = await api.post("/auth/register", data);
-    return response.data;
-  },
-};
-
-// Users API (dùng cho trang User Management)
-export const usersApi = {
-  getAll: async (params?: {
-    page?: number;
-    pageSize?: number;
-    role?: string;
-    status?: string;
-  }): Promise<PaginatedResponse<User>> => {
-    const response = await api.get<PaginatedResponse<User>>("/users", {
-      params,
-    });
-    return response.data;
-  },
-
-  getById: async (id: string): Promise<ApiResponse<User>> => {
-    const response = await api.get<ApiResponse<User>>(`/users/${id}`);
-    return response.data;
-  },
-
-  create: async (data: CreateUserDto): Promise<ApiResponse<User>> => {
-    const response = await api.post<ApiResponse<User>>("/users", data);
-    return response.data;
-  },
-
-  update: async (
-    id: string,
-    data: UpdateUserDto,
-  ): Promise<ApiResponse<User>> => {
-    const response = await api.patch<ApiResponse<User>>(`/users/${id}`, data);
-    return response.data;
-  },
-
-  delete: async (id: string): Promise<ApiResponse<null>> => {
-    const response = await api.delete<ApiResponse<null>>(`/users/${id}`);
-    return response.data;
-  },
-
-  toggleStatus: async (id: string): Promise<ApiResponse<User>> => {
-    const response = await api.patch<ApiResponse<User>>(
-      `/users/${id}/toggle-status`,
-    );
-    return response.data;
+  /**
+   * POST /api/auth/register
+   * Backend trả ApiResult<CreateUserResponseModel> — chỉ cần biết thành công/thất bại.
+   */
+  register: async (data: RegisterRequest): Promise<void> => {
+    await api.post<ApiResult<unknown>>("/auth/register", data);
   },
 };

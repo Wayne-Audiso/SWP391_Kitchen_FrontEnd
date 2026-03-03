@@ -490,8 +490,8 @@ export const getFunctionsByRole = (role: Role): FunctionItem[] => {
 
 // Page permissions by role
 export const pagePermissions: Record<Role, string[]> = {
-  'Admin': ['home', 'dashboard', 'users', 'stores', 'recipes', 'inventory', 'production', 'orders'],
-  'Manager': ['home', 'dashboard', 'recipes', 'inventory', 'production', 'orders', 'stores'],
+  'Admin': ['home', 'dashboard', 'users', 'stores', 'products', 'recipes', 'inventory', 'production', 'orders'],
+  'Manager': ['home', 'dashboard', 'products', 'recipes', 'inventory', 'production', 'orders', 'stores'],
   'Franchise Store Staff': ['home', 'dashboard', 'inventory', 'orders', 'recipes'],
   'Central Kitchen Staff': ['home', 'dashboard', 'production', 'inventory', 'orders', 'recipes'],
   'Supply Coordinator': ['home', 'dashboard', 'orders', 'inventory', 'stores']

@@ -8,11 +8,12 @@ import { Orders } from '@/app/components/Orders';
 import { Recipes } from '@/app/components/Recipes';
 import { Stores } from '@/app/components/Stores';
 import { Users } from '@/app/components/Users';
+import { Products } from '@/app/components/Products';
 import { Sidebar } from '@/app/components/Sidebar';
 import { Toaster } from '@/app/components/ui/sonner';
 import { toast } from 'sonner';
 
-export type Page = 'home' | 'dashboard' | 'production' | 'inventory' | 'orders' | 'recipes' | 'stores' | 'users';
+export type Page = 'home' | 'dashboard' | 'production' | 'inventory' | 'orders' | 'recipes' | 'stores' | 'users' | 'products';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -103,6 +104,8 @@ export default function App() {
         return <Stores />;
       case 'users':
         return <Users />;
+      case 'products':
+        return <Products />;
       default:
         return <HomePage />;
     }

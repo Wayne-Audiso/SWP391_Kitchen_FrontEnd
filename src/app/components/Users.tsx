@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { usersApi, type UserApiModel } from "@/app/services/usersService";
+import { authApi } from "@/app/services/authService";
 
 interface NewUserForm {
   username: string;
@@ -137,17 +138,12 @@ export function Users() {
       return;
     }
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      await fetch(baseUrl + "/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userName: newUser.username,
-          email: newUser.email,
-          password: newUser.password,
-          confirmPassword: newUser.confirmPassword,
-          role: newUser.role,
-        }),
+      await authApi.register({
+        userName: newUser.username,
+        email: newUser.email,
+        password: newUser.password,
+        confirmPassword: newUser.confirmPassword,
+        role: newUser.role,
       });
       toast.success("User created successfully");
       setIsCreateDialogOpen(false);

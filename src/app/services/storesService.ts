@@ -1,4 +1,5 @@
 import { api } from '@/app/utils/apiClient';
+import type { ApiResult } from '@/app/utils/apiTypes';
 
 // --- Types khớp với backend models ---
 
@@ -46,55 +47,58 @@ export interface UpdateCentralKitchenModel {
 }
 
 // --- Franchise Stores API: /api/franchise-stores ---
+// Backend bọc kết quả trong ApiResult<T> — service unwrap về T trực tiếp.
+
 export const franchiseStoresApi = {
   getAll: async (): Promise<FranchiseStoreDto[]> => {
-    const response = await api.get<FranchiseStoreDto[]>('/franchise-stores');
-    return response.data;
+    const res = await api.get<ApiResult<FranchiseStoreDto[]>>('/franchise-stores');
+    return res.data.data ?? [];
   },
 
   getById: async (id: number): Promise<FranchiseStoreDto> => {
-    const response = await api.get<FranchiseStoreDto>(`/franchise-stores/${id}`);
-    return response.data;
+    const res = await api.get<ApiResult<FranchiseStoreDto>>(`/franchise-stores/${id}`);
+    return res.data.data!;
   },
 
   create: async (data: CreateFranchiseStoreModel): Promise<FranchiseStoreDto> => {
-    const response = await api.post<FranchiseStoreDto>('/franchise-stores', data);
-    return response.data;
+    const res = await api.post<ApiResult<FranchiseStoreDto>>('/franchise-stores', data);
+    return res.data.data!;
   },
 
   update: async (id: number, data: UpdateFranchiseStoreModel): Promise<FranchiseStoreDto> => {
-    const response = await api.put<FranchiseStoreDto>(`/franchise-stores/${id}`, data);
-    return response.data;
+    const res = await api.put<ApiResult<FranchiseStoreDto>>(`/franchise-stores/${id}`, data);
+    return res.data.data!;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/franchise-stores/${id}`);
+    await api.delete<ApiResult<boolean>>(`/franchise-stores/${id}`);
   },
 };
 
 // --- Central Kitchens API: /api/central-kitchens ---
+
 export const centralKitchensApi = {
   getAll: async (): Promise<CentralKitchenDto[]> => {
-    const response = await api.get<CentralKitchenDto[]>('/central-kitchens');
-    return response.data;
+    const res = await api.get<ApiResult<CentralKitchenDto[]>>('/central-kitchens');
+    return res.data.data ?? [];
   },
 
   getById: async (id: number): Promise<CentralKitchenDto> => {
-    const response = await api.get<CentralKitchenDto>(`/central-kitchens/${id}`);
-    return response.data;
+    const res = await api.get<ApiResult<CentralKitchenDto>>(`/central-kitchens/${id}`);
+    return res.data.data!;
   },
 
   create: async (data: CreateCentralKitchenModel): Promise<CentralKitchenDto> => {
-    const response = await api.post<CentralKitchenDto>('/central-kitchens', data);
-    return response.data;
+    const res = await api.post<ApiResult<CentralKitchenDto>>('/central-kitchens', data);
+    return res.data.data!;
   },
 
   update: async (id: number, data: UpdateCentralKitchenModel): Promise<CentralKitchenDto> => {
-    const response = await api.put<CentralKitchenDto>(`/central-kitchens/${id}`, data);
-    return response.data;
+    const res = await api.put<ApiResult<CentralKitchenDto>>(`/central-kitchens/${id}`, data);
+    return res.data.data!;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/central-kitchens/${id}`);
+    await api.delete<ApiResult<boolean>>(`/central-kitchens/${id}`);
   },
 };

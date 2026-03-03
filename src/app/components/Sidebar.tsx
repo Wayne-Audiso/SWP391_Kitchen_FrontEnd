@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Warehouse, ShoppingCart, BookOpen, Store, Users as UsersIcon, Home, LogOut, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Package, Warehouse, ShoppingCart, BookOpen, Store, Users as UsersIcon, Home, LogOut, ChevronDown, Tag } from 'lucide-react';
 import type { Page } from '@/app/App';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -28,6 +28,7 @@ export function Sidebar({ currentPage, setCurrentPage, user, onLogout }: Sidebar
     { id: 'inventory' as Page, label: 'Inventory', icon: Warehouse },
     { id: 'orders' as Page, label: 'Orders', icon: ShoppingCart },
     { id: 'recipes' as Page, label: 'Recipes', icon: BookOpen },
+    { id: 'products' as Page, label: 'Products', icon: Tag },
     { id: 'stores' as Page, label: 'Stores', icon: Store },
     { id: 'users' as Page, label: 'Users', icon: UsersIcon },
   ];

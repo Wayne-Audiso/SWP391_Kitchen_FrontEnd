@@ -1,4 +1,14 @@
-// Common API response types
+// ── Wrapper thống nhất từ backend ApiResult<T> ───────────────────────────────
+export interface ApiResult<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+  statusCode: number;
+  errors: string[];
+  metadata?: Record<string, any>;
+}
+
+// Common API response types (legacy)
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

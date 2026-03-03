@@ -1,6 +1,7 @@
 import { api } from '@/app/utils/apiClient';
+import type { ApiResult } from '@/app/utils/apiTypes';
 
-// --- Types khớp với backend models ---
+// --- Types khớp với backend DTOs ---
 
 export interface ProductDto {
   productId: number;
@@ -44,55 +45,58 @@ export interface UpdateProductTypeModel {
 }
 
 // --- Products API: /api/products ---
+// Backend bọc kết quả trong ApiResult<T> — service unwrap về T trực tiếp.
+
 export const productsApi = {
   getAll: async (): Promise<ProductDto[]> => {
-    const response = await api.get<ProductDto[]>('/products');
-    return response.data;
+    const res = await api.get<ApiResult<ProductDto[]>>('/products');
+    return res.data.data ?? [];
   },
 
   getById: async (id: number): Promise<ProductDto> => {
-    const response = await api.get<ProductDto>(`/products/${id}`);
-    return response.data;
+    const res = await api.get<ApiResult<ProductDto>>(`/products/${id}`);
+    return res.data.data!;
   },
 
   create: async (data: CreateProductModel): Promise<ProductDto> => {
-    const response = await api.post<ProductDto>('/products', data);
-    return response.data;
+    const res = await api.post<ApiResult<ProductDto>>('/products', data);
+    return res.data.data!;
   },
 
   update: async (id: number, data: UpdateProductModel): Promise<ProductDto> => {
-    const response = await api.put<ProductDto>(`/products/${id}`, data);
-    return response.data;
+    const res = await api.put<ApiResult<ProductDto>>(`/products/${id}`, data);
+    return res.data.data!;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}`);
+    await api.delete<ApiResult<boolean>>(`/products/${id}`);
   },
 };
 
 // --- Product Types API: /api/product-types ---
+
 export const productTypesApi = {
   getAll: async (): Promise<ProductTypeDto[]> => {
-    const response = await api.get<ProductTypeDto[]>('/product-types');
-    return response.data;
+    const res = await api.get<ApiResult<ProductTypeDto[]>>('/product-types');
+    return res.data.data ?? [];
   },
 
   getById: async (id: number): Promise<ProductTypeDto> => {
-    const response = await api.get<ProductTypeDto>(`/product-types/${id}`);
-    return response.data;
+    const res = await api.get<ApiResult<ProductTypeDto>>(`/product-types/${id}`);
+    return res.data.data!;
   },
 
   create: async (data: CreateProductTypeModel): Promise<ProductTypeDto> => {
-    const response = await api.post<ProductTypeDto>('/product-types', data);
-    return response.data;
+    const res = await api.post<ApiResult<ProductTypeDto>>('/product-types', data);
+    return res.data.data!;
   },
 
   update: async (id: number, data: UpdateProductTypeModel): Promise<ProductTypeDto> => {
-    const response = await api.put<ProductTypeDto>(`/product-types/${id}`, data);
-    return response.data;
+    const res = await api.put<ApiResult<ProductTypeDto>>(`/product-types/${id}`, data);
+    return res.data.data!;
   },
 
   delete: async (id: number): Promise<void> => {
-    await api.delete(`/product-types/${id}`);
+    await api.delete<ApiResult<boolean>>(`/product-types/${id}`);
   },
 };

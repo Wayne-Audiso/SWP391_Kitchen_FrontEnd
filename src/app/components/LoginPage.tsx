@@ -24,6 +24,7 @@ interface LoginPageProps {
 type LoginView = "default" | "register";
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  // Lưu username/password, Quản lý loading khi gọi API,Hiển thị lỗi nếu login thất bại
   const [view, setView] = useState<LoginView>("default");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

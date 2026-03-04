@@ -6,7 +6,7 @@ import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Store, Lock, User as UserIcon, AlertCircle, ArrowLeft, Mail, Building, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
-
+// Định nghĩa kiểu dữ liệu User, Định nghĩa props onLogin, Tạo type chuyển đổi view login/register
 export interface User {
   id: string;
   username: string;

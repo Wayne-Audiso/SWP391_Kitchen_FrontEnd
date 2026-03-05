@@ -218,7 +218,7 @@ export function HomePage() {
         return 'bg-gray-600 text-white';
     }
   };
-
+//
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header Section */}

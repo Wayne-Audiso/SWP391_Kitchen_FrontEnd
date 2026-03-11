@@ -1,50 +1,131 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { ShoppingCart, Truck, CheckCircle, Clock, Filter } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState, useEffect, useMemo } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/app/components/ui/table";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/app/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import {
+  ShoppingCart,
+  Truck,
+  CheckCircle,
+  Clock,
+  Plus,
+  Loader2,
+  Package,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  storeOrdersApi,
+  shipmentsApi,
+  type StoreOrderDto,
+  type ShipmentDto,
+  type CreateStoreOrderModel,
+  type CreateStoreOrderLineModel,
+  type ReceiveShipmentLineModel,
+} from "@/app/services/ordersService";
+import {
+  centralKitchensApi,
+  franchiseStoresApi,
+  type CentralKitchenDto,
+  type FranchiseStoreDto,
+} from "@/app/services/storesService";
+import {
+  productsApi,
+  type ProductDto,
+} from "@/app/services/productsService";
 
-interface Order {
-  id: string;
-  storeOrderId: string;
-  franchiseStore: string;
-  orderDate: string;
-  deliveryDate: string;
-  totalQuantity: number;
-  status: 'pending' | 'processing' | 'shipping' | 'delivered';
-  items: number;
-}
 
-interface Shipment {
-  id: string;
-  shipmentId: string;
-  storeOrderId: string;
-  franchiseStore: string;
-  deliveryStatus: 'preparing' | 'in-transit' | 'delivered';
-  receivedDate: string | null;
-}
+const getCurrentUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("currentUser") || "{}");
+  } catch {
+    return {};
+  }
+};
 
-const initialOrders: Order[] = [
-  { id: '1', storeOrderId: 'SO-2401', franchiseStore: 'District 1 Store', orderDate: '2026-01-20', deliveryDate: '2026-01-21', totalQuantity: 450, status: 'processing', items: 8 },
-  { id: '2', storeOrderId: 'SO-2402', franchiseStore: 'District 2 Store', orderDate: '2026-01-20', deliveryDate: '2026-01-21', totalQuantity: 320, status: 'shipping', items: 6 },
-  { id: '3', storeOrderId: 'SO-2403', franchiseStore: 'District 7 Store', orderDate: '2026-01-19', deliveryDate: '2026-01-20', totalQuantity: 580, status: 'delivered', items: 10 },
-  { id: '4', storeOrderId: 'SO-2404', franchiseStore: 'District 3 Store', orderDate: '2026-01-20', deliveryDate: '2026-01-22', totalQuantity: 200, status: 'pending', items: 4 },
-];
+const ORDER_STATUS: Record<string, { label: string; className: string }> = {
+  Pending:      { label: "Pending",       className: "bg-gray-100 text-gray-700" },
+  Approved:     { label: "Approved",      className: "bg-blue-100 text-blue-700" },
+  Rejected:     { label: "Rejected",      className: "bg-red-100 text-red-700" },
+  InProduction: { label: "In Production", className: "bg-purple-100 text-purple-700" },
+  InDelivery:   { label: "In Delivery",   className: "bg-yellow-100 text-yellow-700" },
+  Completed:    { label: "Completed",     className: "bg-green-100 text-green-700" },
+};
 
-const initialShipments: Shipment[] = [
-  { id: '1', shipmentId: 'SH-1101', storeOrderId: 'SO-2402', franchiseStore: 'District 2 Store', deliveryStatus: 'in-transit', receivedDate: null },
-  { id: '2', shipmentId: 'SH-1100', storeOrderId: 'SO-2403', franchiseStore: 'District 7 Store', deliveryStatus: 'delivered', receivedDate: '2026-01-20 09:30' },
-  { id: '3', shipmentId: 'SH-1099', storeOrderId: 'SO-2398', franchiseStore: 'District 1 Store', deliveryStatus: 'delivered', receivedDate: '2026-01-19 14:15' },
-];
+// Issue #4 fix: "Preparing" added — backend now initialises DeliveryStatus to "Preparing"
+const SHIPMENT_STATUS: Record<string, { label: string; className: string }> = {
+  Preparing:  { label: "Preparing",   className: "bg-blue-100 text-blue-700" },
+  InDelivery: { label: "In Delivery", className: "bg-yellow-100 text-yellow-700" },
+  Delivered:  { label: "Delivered",   className: "bg-green-100 text-green-700" },
+  Cancelled:  { label: "Cancelled",   className: "bg-red-100 text-red-700" },
+};
 
+// Luồng trạng thái đơn hàng
+const NEXT_STATUS: Record<string, string> = {
+  Pending:      "Approved",
+  Approved:     "InProduction",
+  InProduction: "InDelivery",
+  InDelivery:   "Completed",
+};
+
+const NEXT_LABEL: Record<string, string> = {
+  Pending:      "Approve",
+  Approved:     "Start Production",
+  InProduction: "Send Delivery",
+  InDelivery:   "Mark Completed",
+};
+//// Phân quyền người dùng theo vai trò cho module Orders
 export function Orders() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [shipments, setShipments] = useState<Shipment[]>(initialShipments);
-  const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
+  const currentUser = getCurrentUser();
+  const role: string = currentUser.role ?? "";
+
+  // Role-based permissions
+  const canCreateOrder =
+    role === "Franchise Store Staff" || role === "Supply Coordinator" || role === "Admin";
+  const canUpdateOrderStatus =
+    role === "Supply Coordinator" || role === "Manager" || role === "Admin";
+  // Issue #2: kitchen staff creates shipments
+  const canCreateShipment =
+    role === "Central Kitchen Staff" || role === "Admin";
+  // Issue #2: SC/Manager advances shipment Preparing → InDelivery
+  const canUpdateShipmentStatus =
+    role === "Supply Coordinator" || role === "Manager" || role === "Admin";
+  const canReceiveShipment =
+    role === "Franchise Store Staff" || role === "Supply Coordinator" || role === "Admin";
 
   const handleProcessOrder = (orderId: string) => {
     setOrders(orders.map(o => 

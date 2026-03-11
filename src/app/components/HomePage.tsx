@@ -120,7 +120,7 @@ export function HomePage() {
     'SC-09': { icon: TruckIcon, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
     'SC-10': { icon: FileSpreadsheet, color: 'text-pink-600', bgColor: 'bg-pink-100' },
   };
-
+// Lấy danh sách function theo Role và tạo Quick Access Card
   const functions = getFunctionsByRole(selectedRole);
   
   // Filter out Login/Logout functions and convert to QuickAccessCard format
@@ -218,7 +218,7 @@ export function HomePage() {
         return 'bg-gray-600 text-white';
     }
   };
-
+//Layout chính: chia màn hình 2 cột (branding & form), Left: Logo + thông tin hệ thống + danh sách feature, right: hiển thị login/register dựa vào view state
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header Section */}

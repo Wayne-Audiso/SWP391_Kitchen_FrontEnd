@@ -133,26 +133,25 @@ export function Orders() {
     ));
     toast.success('Order is now being processed');
   };
+  // ── Data state ──────────────────────────────────────────────────────────────
+   const [orders,    setOrders]    = useState<StoreOrderDto[]>([]);
+  const [shipments, setShipments] = useState<ShipmentDto[]>([]);
+  const [kitchens,  setKitchens]  = useState<CentralKitchenDto[]>([]);
+  const [stores,    setStores]    = useState<FranchiseStoreDto[]>([]);
+  const [products,  setProducts]  = useState<ProductDto[]>([]);
+  const [loading,   setLoading]   = useState(true);
 
-  const handleShipOrder = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-      setOrders(orders.map(o => 
-        o.id === orderId ? { ...o, status: 'shipping' as const } : o
-      ));
-      
-      const newShipment: Shipment = {
-        id: String(shipments.length + 1),
-        shipmentId: `SH-${1102 + shipments.length}`,
-        storeOrderId: order.storeOrderId,
-        franchiseStore: order.franchiseStore,
-        deliveryStatus: 'preparing',
-        receivedDate: null,
-      };
-      setShipments([newShipment, ...shipments]);
-      toast.success('Order shipped successfully!');
-    }
-  };
+  // ── Create Order form ────────────────────────────────────────────────────────
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateStoreOrderModel>({
+    centralKitchenId: 0,
+    franchiseStoreId: 0,
+    deliveryDate:     undefined,
+    lines:            [],
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+    
 
   const handleConfirmDelivery = (shipmentId: string) => {
     setShipments(shipments.map(s => 

@@ -108,7 +108,7 @@ const NEXT_LABEL: Record<string, string> = {
   InProduction: "Send Delivery",
   InDelivery:   "Mark Completed",
 };
-//// Phân quyền người dùng theo vai trò cho module Orders
+// Phân quyền người dùng theo vai trò cho module Orders
 export function Orders() {
   const currentUser = getCurrentUser();
   const role: string = currentUser.role ?? "";
@@ -150,22 +150,20 @@ export function Orders() {
     lines:            [],
   });
   const [submitting, setSubmitting] = useState(false);
+  // ── Issue #2: Create Shipment form ───────────────────────────────────────────
+const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
+  const [shipmentForm, setShipmentForm] = useState<{
+    storeOrderId:     number;
+    centralKitchenId: number;
+    lines: { productId: number; shippedQuantity: number }[];
+  }>({
+    storeOrderId:     0,
+    centralKitchenId: 0,
+    lines:            [{ productId: 0, shippedQuantity: 1 }],
+  });
+  const [creatingShipment, setCreatingShipment] = useState(false);
 
-    
-
-  const handleConfirmDelivery = (shipmentId: string) => {
-    setShipments(shipments.map(s => 
-      s.shipmentId === shipmentId 
-        ? { ...s, deliveryStatus: 'delivered' as const, receivedDate: new Date().toISOString().slice(0, 16).replace('T', ' ') }
-        : s
-    ));
-    
-    const shipment = shipments.find(s => s.shipmentId === shipmentId);
-    if (shipment) {
-      setOrders(orders.map(o => 
-        o.storeOrderId === shipment.storeOrderId ? { ...o, status: 'delivered' as const } : o
-      ));
-    }
+  // ── Status update ───────────
     
     toast.success('Delivery confirmed!');
   };

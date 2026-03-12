@@ -113,8 +113,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar 
-        currentPage={currentPage} 
+      <Sidebar
+        currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         user={user}
         onLogout={handleLogout}

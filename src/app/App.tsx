@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { LoginPage, User } from '@/app/components/LoginPage';
 import { HomePage } from '@/app/components/HomePage';
 import { Dashboard } from '@/app/components/Dashboard';
@@ -40,20 +40,20 @@ export default function App() {
       setUser(null);
       setCurrentPage('home');
     };
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    globalThis.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => globalThis.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
-  const handleLogin = (loggedInUser: User, token: string) => {
+  const handleLogin = useCallback((loggedInUser: User, token: string) => {
     setUser(loggedInUser);
     localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
     localStorage.setItem('authToken', token);
     toast.success(`Welcome back, ${loggedInUser.name}!`, {
       description: `Logged in as ${loggedInUser.role}`,
     });
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     const userName = user?.name;
     setUser(null);
     localStorage.removeItem('currentUser');
@@ -62,7 +62,7 @@ export default function App() {
     toast.info(`Goodbye, ${userName}!`, {
       description: 'You have been logged out successfully',
     });
-  };
+  }, [user?.name]);
 
   // Show loading state while checking for stored session
   if (isLoading) {

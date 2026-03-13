@@ -162,28 +162,49 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
     lines:            [{ productId: 0, shippedQuantity: 1 }],
   });
   const [creatingShipment, setCreatingShipment] = useState(false);
+// Khởi tạo các trạng thái điều khiển UI và bộ lọc dữ liệu
+  // ── Status update ────────────────────────────────────────────────────────────
+  const [updatingOrderId,    setUpdatingOrderId]    = useState<number | null>(null);
+  const [updatingShipmentId, setUpdatingShipmentId] = useState<number | null>(null);
 
-  // ── Status update ───────────
-    
-    toast.success('Delivery confirmed!');
+  // ── Filter ───────────────────────────────────────────────────────────────────
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // ── Issue #8: controlled tabs + shipment filter by order ─────────────────────
+  const [activeTab,           setActiveTab]           = useState("orders");
+  const [shipmentOrderFilter, setShipmentOrderFilter] = useState<number | null>(null);
+
+  // ── Receive Shipment dialog ──────────────────────────────────────────────────
+  const [receiveShipment, setReceiveShipment] = useState<ShipmentDto | null>(null);
+  const [receiveLines,    setReceiveLines]    = useState<ReceiveShipmentLineModel[]>([]);
+  const [receiving,       setReceiving]       = useState(false);
+//
+  // ── Load data ────────────────────────────────────────────────────────────────
+  useEffect(() => { loadAll(); }, []);
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      const [ordersData, shipmentsData, kitchensData, storesData, productsData] =
+        await Promise.all([
+          storeOrdersApi.getAll(),
+          shipmentsApi.getAll(),
+          centralKitchensApi.getAll(),
+          franchiseStoresApi.getAll(),
+          productsApi.getAll(),
+        ]);
+      setOrders(ordersData);
+      setShipments(shipmentsData);
+      setKitchens(kitchensData);
+      setStores(storesData);
+      setProducts(productsData);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getOrderStatusBadge = (status: string) => {
-    const statusConfig = {
-      'pending': { label: 'Pending', className: 'bg-gray-100 text-gray-700', icon: Clock },
-      'processing': { label: 'Processing', className: 'bg-blue-100 text-blue-700', icon: ShoppingCart },
-      'shipping': { label: 'Shipping', className: 'bg-yellow-100 text-yellow-700', icon: Truck },
-      'delivered': { label: 'Delivered', className: 'bg-green-100 text-green-700', icon: CheckCircle },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    const Icon = config.icon;
-    return (
-      <Badge className={`${config.className} flex items-center gap-1 w-fit`}>
-        <Icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    );
-  };
 
   const getShipmentStatusBadge = (status: string) => {
     const statusConfig = {

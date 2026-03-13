@@ -178,7 +178,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   const [receiveShipment, setReceiveShipment] = useState<ShipmentDto | null>(null);
   const [receiveLines,    setReceiveLines]    = useState<ReceiveShipmentLineModel[]>([]);
   const [receiving,       setReceiving]       = useState(false);
-//
+//Triển khai logic tải dữ liệu đồng thời từ các API
   // ── Load data ────────────────────────────────────────────────────────────────
   useEffect(() => { loadAll(); }, []);
 

@@ -212,24 +212,39 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
         (acc[s.storeOrderId] ??= []).push(s);
         return acc;
       }, {}),
-    [shipments]
+    [shipments] 
   );
+  // Cảnh báo khi order hoàn thành nhưng shipment chưa Delivered
+  // ── Order status actions ─────────────────────────────────────────────────────
+  const handleAdvanceStatus = async (order: StoreOrderDto) => {
+    const next = NEXT_STATUS[order.status ?? ""];
+    if (!next) return;
 
-  const getOrderStats = () => {
-    return {
-      pending: orders.filter(o => o.status === 'pending').length,
-      processing: orders.filter(o => o.status === 'processing').length,
-      shipping: orders.filter(o => o.status === 'shipping').length,
-      delivered: orders.filter(o => o.status === 'delivered').length,
-    };
+    // Issue #7: warn when completing if not all shipments are delivered
+    if (next === "Completed") {
+      const linked = shipmentsByOrder[order.storeOrderId] ?? [];
+      const allDelivered =
+        linked.length > 0 && linked.every((s) => s.deliveryStatus === "Delivered");
+      if (!allDelivered) {
+        toast.warning(
+          `Order #${order.storeOrderId} has shipments that are not yet Delivered. Proceed with caution.`
+        );
+      }
+    }
+  //
+  try {
+      setUpdatingOrderId(order.storeOrderId);
+      const updated = await storeOrdersApi.updateStatus(order.storeOrderId, { status: next });
+      setOrders((prev) =>
+        prev.map((o) => (o.storeOrderId === updated.storeOrderId ? updated : o))
+      );
+      toast.success(`Order #${order.storeOrderId} → ${ORDER_STATUS[next]?.label}`);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setUpdatingOrderId(null);
+    }
   };
-
-  const stats = getOrderStats();
-
-  const filteredOrders = orderStatusFilter === 'all'
-    ? orders
-    : orders.filter(o => o.status === orderStatusFilter);
-
   return (
     <div className="p-8">
       <div className="mb-8">

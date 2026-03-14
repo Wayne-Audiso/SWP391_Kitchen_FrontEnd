@@ -204,17 +204,16 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setLoading(false);
     }
   };
-
-
-  const getShipmentStatusBadge = (status: string) => {
-    const statusConfig = {
-      'preparing': { label: 'Preparing', className: 'bg-blue-100 text-blue-700' },
-      'in-transit': { label: 'In Transit', className: 'bg-yellow-100 text-yellow-700' },
-      'delivered': { label: 'Delivered', className: 'bg-green-100 text-green-700' },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig];
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
+//Tạo shipmentsByOrder để nhóm shipment theo storeOrderId
+// ── Issue #7: shipments-per-order map ────────────────────────────────────────
+ const shipmentsByOrder = useMemo(
+    () =>
+      shipments.reduce<Record<number, ShipmentDto[]>>((acc, s) => {
+        (acc[s.storeOrderId] ??= []).push(s);
+        return acc;
+      }, {}),
+    [shipments]
+  );
 
   const getOrderStats = () => {
     return {

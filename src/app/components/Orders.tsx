@@ -262,6 +262,44 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setUpdatingOrderId(null);
     }
   };
+  //Xử lý logic kiểm tra và tạo đơn hàng mới
+  // ── Create order ─────────────────────────────────────────────────────────────
+  const handleCreateOrder = async () => {
+    if (!createForm.centralKitchenId || !createForm.franchiseStoreId) {
+      toast.error("Please select a kitchen and a store");
+      return;
+    }
+    if (createForm.lines.length === 0) {
+      toast.error("Add at least one product line");
+      return;
+    }
+    if (createForm.lines.some((l) => !l.productId || l.quantity < 1)) {
+      toast.error("Each line must have a product and quantity ≥ 1");
+      return;
+    }
+    const pids = createForm.lines.map((l) => l.productId);
+    if (new Set(pids).size !== pids.length) {
+      toast.error("The same product cannot appear twice in one order");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const newOrder = await storeOrdersApi.create(createForm);
+      setOrders((prev) => [newOrder, ...prev]);
+      toast.success("Order created successfully");
+      setIsCreateOpen(false);
+      setCreateForm({
+        centralKitchenId: 0,
+        franchiseStoreId: 0,
+        deliveryDate:     undefined,
+        lines:            [],
+      });
+    } catch {
+      // handled by interceptor
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <div className="p-8">
       <div className="mb-8">

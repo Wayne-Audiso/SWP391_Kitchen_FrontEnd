@@ -231,7 +231,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
         );
       }
     }
-  //
+  //Thêm xử lý cập nhật trạng thái order và cập nhật danh sách orders
   try {
       setUpdatingOrderId(order.storeOrderId);
       const updated = await storeOrdersApi.updateStatus(order.storeOrderId, { status: next });
@@ -239,6 +239,23 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
         prev.map((o) => (o.storeOrderId === updated.storeOrderId ? updated : o))
       );
       toast.success(`Order #${order.storeOrderId} → ${ORDER_STATUS[next]?.label}`);
+    } catch {
+      // handled by interceptor
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+  //Xử lý logic từ chối đơn hàng và cập nhật trạng thái
+  const handleRejectOrder = async (order: StoreOrderDto) => {
+    try {
+      setUpdatingOrderId(order.storeOrderId);
+      const updated = await storeOrdersApi.updateStatus(order.storeOrderId, {
+        status: "Rejected",
+      });
+      setOrders((prev) =>
+        prev.map((o) => (o.storeOrderId === updated.storeOrderId ? updated : o))
+      );
+      toast.success(`Order #${order.storeOrderId} rejected`);
     } catch {
       // handled by interceptor
     } finally {

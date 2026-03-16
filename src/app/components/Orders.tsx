@@ -300,7 +300,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setSubmitting(false);
     }
   };
-  //
+  //xử lý thêm, xóa, sửa chi tiết đơn hàng
   // ── Create Order line helpers ─────────────────────────────────────────────────
   const addOrderLine = () =>
     setCreateForm((f) => ({ ...f, lines: [...f.lines, { productId: 0, quantity: 1 }] }));
@@ -310,6 +310,71 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
 
   const updateOrderLine = (idx: number, field: keyof CreateStoreOrderLineModel, value: number) =>
     setCreateForm((f) => ({
+      ...f,
+      lines: f.lines.map((l, i) => (i === idx ? { ...l, [field]: value } : l)),
+    }));
+  // hoàn thiện logic tạo lô hàng và quản lý chi tiết sản phẩm
+ // ── Issue #2: Create Shipment ─────────────────────────────────────────────────
+  const handleCreateShipment = async () => {
+    //Kiểm tra: Bắt buộc phải chọn một Đơn hàng trước
+    if (!shipmentForm.storeOrderId) {
+      toast.error("Please select an order");
+      return;
+    }
+    // Lọc bỏ các dòng trống (người dùng bấm Add nhưng chưa chọn sản phẩm)
+    const validLines = shipmentForm.lines.filter((l) => l.productId > 0);
+    //// Kiểm tra: Phải có ít nhất 1 sản phẩm hợp lệ mới cho đi tiếp
+    if (validLines.length === 0) {
+      toast.error("Please add at least one product line");
+      return;
+    }
+    try {
+      setCreatingShipment(true); //// Khóa nút bấm để tránh click đúp
+      // Gọi API tạo Shipment với dữ liệu đã được lọc sạch
+      const newShipment = await shipmentsApi.create({
+        storeOrderId:     shipmentForm.storeOrderId,
+        centralKitchenId: shipmentForm.centralKitchenId,
+        lines: validLines.map((l) => ({
+          productId:       l.productId,
+          shippedQuantity: l.shippedQuantity,
+        })),
+      });
+      // Ép lô hàng mới lên đầu danh sách hiển thị
+      setShipments((prev) => [newShipment, ...prev]);
+      toast.success(`Shipment #${newShipment.shipmentId} created`);
+      // Đóng form và reset dữ liệu về trạng thái trống ban đầu
+      setIsCreateShipmentOpen(false);
+      setShipmentForm({
+        storeOrderId:     0,
+        centralKitchenId: 0,
+        lines:            [{ productId: 0, shippedQuantity: 1 }],
+      });
+    } catch {
+      // handled by interceptor, // Để trống vì lỗi API (như 400, 500) đã được bắt tự động ở interceptor
+    } finally {
+      //Luôn tắt trạng thái loading dù API thành công hay thất bại
+      setCreatingShipment(false);
+    }
+  };
+  //Thêm một dòng mới (mặc định id = 0, số lượng = 1) vào cuối mảng
+  const addShipmentLine = () =>
+    setShipmentForm((f) => ({
+      ...f,
+      lines: [...f.lines, { productId: 0, shippedQuantity: 1 }],
+    }));
+  //Xóa dòng dựa theo vị trí (index)
+  const removeShipmentLine = (idx: number) =>
+    setShipmentForm((f) => ({
+      ...f,
+      lines: f.lines.filter((_, i) => i !== idx),
+    }));
+  // Cập nhật dữ liệu (đổi sản phẩm hoặc số lượng) tại dòng cụ thể
+  const updateShipmentLine = (
+    idx: number,
+    field: "productId" | "shippedQuantity",
+    value: number
+  ) =>
+    setShipmentForm((f) => ({
       ...f,
       lines: f.lines.map((l, i) => (i === idx ? { ...l, [field]: value } : l)),
     }));

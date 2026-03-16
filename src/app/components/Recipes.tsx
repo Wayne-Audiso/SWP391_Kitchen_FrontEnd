@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BookOpen, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Interface định nghĩa cấu trúc của một Recipe
+// Mỗi công thức sẽ phải có các thuộc tính này
 interface Recipe {
   id: string;
   productName: string;
@@ -17,11 +19,16 @@ interface Recipe {
   shelfLife: string;
 }
 
+// Dữ liệu mẫu ban đầu để hiển thị khi trang được load
+// Đây chỉ là mock data (dữ liệu giả)
+
 const initialRecipes: Recipe[] = [
   {
     id: 'RCP-001',
     productName: 'Fresh Bread',
     description: 'Traditional Vietnamese fresh bread',
+
+// Danh sách nguyên liệu
     ingredients: [
       { name: 'Wheat Flour', quantity: 500, unit: 'g' },
       { name: 'Water', quantity: 300, unit: 'ml' },
@@ -61,31 +68,49 @@ const initialRecipes: Recipe[] = [
   },
 ];
 
+// Component chính của trang Recipe Management
+
 export function Recipes() {
+
+  // State lưu toàn bộ danh sách recipe
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
+
+  // Recipe đang được chọn để xem chi tiết
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  // State điều khiển mở/đóng dialog tạo recipe
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // State điều khiển dialog xem chi tiết recipe
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
+  // State lưu thông tin recipe mới khi user đang nhập
   const [newRecipe, setNewRecipe] = useState({
     productName: '',
     description: '',
     shelfLife: '',
   });
 
+  // State lưu nguyên liệu đang nhập
   const [newIngredient, setNewIngredient] = useState({
     name: '',
     quantity: '',
     unit: 'g',
   });
 
+  // Danh sách nguyên liệu tạm thời khi tạo recipe
   const [tempIngredients, setTempIngredients] = useState<{ name: string; quantity: number; unit: string }[]>([]);
 
+  // Hàm thêm nguyên liệu vào danh sách tempIngredients
   const handleAddIngredient = () => {
+
+    // Kiểm tra người dùng đã nhập đủ chưa
     if (!newIngredient.name || !newIngredient.quantity) {
       toast.error('Please fill in ingredient details');
       return;
     }
+
+    // Thêm nguyên liệu mới vào danh sách
 
     setTempIngredients([
       ...tempIngredients,
@@ -96,18 +121,27 @@ export function Recipes() {
       },
     ]);
 
+
+    // Reset input sau khi thêm
     setNewIngredient({ name: '', quantity: '', unit: 'g' });
   };
 
+
+   // Hàm xóa nguyên liệu khỏi danh sách
   const handleRemoveIngredient = (index: number) => {
     setTempIngredients(tempIngredients.filter((_, i) => i !== index));
   };
 
+  // Hàm tạo recipe mới
   const handleCreateRecipe = () => {
+
+    // Kiểm tra dữ liệu hợp lệ
     if (!newRecipe.productName || !newRecipe.description || tempIngredients.length === 0) {
       toast.error('Please fill in all fields and add at least one ingredient');
       return;
     }
+
+    // Tạo object recipe mới
 
     const recipe: Recipe = {
       id: `RCP-${String(recipes.length + 1).padStart(3, '0')}`,
@@ -117,8 +151,13 @@ export function Recipes() {
       shelfLife: newRecipe.shelfLife,
     };
 
+    // Thêm recipe vào danh sách
     setRecipes([...recipes, recipe]);
+
+    // Đóng dialog
     setIsCreateDialogOpen(false);
+
+    // Reset form
     setNewRecipe({ productName: '', description: '', shelfLife: '' });
     setTempIngredients([]);
     toast.success('Recipe created successfully!');

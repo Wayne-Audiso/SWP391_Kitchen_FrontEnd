@@ -300,6 +300,20 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setSubmitting(false);
     }
   };
+  //
+  // ── Create Order line helpers ─────────────────────────────────────────────────
+  const addOrderLine = () =>
+    setCreateForm((f) => ({ ...f, lines: [...f.lines, { productId: 0, quantity: 1 }] }));
+
+  const removeOrderLine = (idx: number) =>
+    setCreateForm((f) => ({ ...f, lines: f.lines.filter((_, i) => i !== idx) }));
+
+  const updateOrderLine = (idx: number, field: keyof CreateStoreOrderLineModel, value: number) =>
+    setCreateForm((f) => ({
+      ...f,
+      lines: f.lines.map((l, i) => (i === idx ? { ...l, [field]: value } : l)),
+    }));
+
   return (
     <div className="p-8">
       <div className="mb-8">

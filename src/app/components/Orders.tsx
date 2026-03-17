@@ -508,195 +508,802 @@ const filteredShipments = shipmentOrderFilter
 const shipmentableOrders = orders.filter((o) =>
   ["Approved", "InProduction"].includes(o.status ?? "")
 );
-
+  //hoàn thiện giao diện Quản lý Đơn/Lô hàng, tích hợp bảng và popup tạo mới
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Order Management</h2>
-        <p className="text-gray-600 mt-2">Track and process orders from franchise stores</p>
+      {/* Header */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Order Management</h2>
+          <p className="text-gray-600 mt-2">
+            Track and process orders from franchise stores
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" size="sm" onClick={loadAll} disabled={loading}>
+            <RotateCcw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+          {canCreateOrder && (
+            <Button className="gap-2" onClick={() => setIsCreateOpen(true)}>
+              <Plus className="w-4 h-4" />
+              New Order
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
+        <Card className="border-l-4 border-l-gray-400">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
+            <ShoppingCart className="w-4 h-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-gray-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
-            <Clock className="w-4 h-4 text-gray-600" />
+            <Clock className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-gray-600 mt-1">Orders</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Processing</CardTitle>
-            <ShoppingCart className="w-4 h-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.processing}</div>
-            <p className="text-xs text-gray-600 mt-1">Orders</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Shipping</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">In Progress</CardTitle>
             <Truck className="w-4 h-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.shipping}</div>
-            <p className="text-xs text-gray-600 mt-1">Orders</p>
+            <div className="text-2xl font-bold text-yellow-600">{stats.active}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Delivered</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Completed</CardTitle>
             <CheckCircle className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.delivered}</div>
-            <p className="text-xs text-gray-600 mt-1">Today</p>
+            <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="orders" className="space-y-6">
+      {/* Tabs — Issue #8: controlled */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => {
+          setActiveTab(v);
+          if (v !== "shipments") setShipmentOrderFilter(null);
+        }}
+        className="space-y-6"
+      >
         <TabsList>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="shipments">Shipments</TabsTrigger>
+          <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+          <TabsTrigger value="shipments">Shipments ({shipments.length})</TabsTrigger>
         </TabsList>
 
+        {/* ── Orders Tab ── */}
         <TabsContent value="orders">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Order List</CardTitle>
-                <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <Filter className="w-4 h-4 mr-2" />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-44">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="shipping">Shipping</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                    <SelectItem value="InProduction">In Production</SelectItem>
+                    <SelectItem value="InDelivery">In Delivery</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Store</TableHead>
-                    <TableHead>Order Date</TableHead>
-                    <TableHead>Delivery Date</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Total Qty</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.storeOrderId}</TableCell>
-                      <TableCell>{order.franchiseStore}</TableCell>
-                      <TableCell>{new Date(order.orderDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(order.deliveryDate).toLocaleDateString()}</TableCell>
-                      <TableCell>{order.items} items</TableCell>
-                      <TableCell>{order.totalQuantity} units</TableCell>
-                      <TableCell>{getOrderStatusBadge(order.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {order.status === 'pending' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleProcessOrder(order.id)}
-                            >
-                              Process
-                            </Button>
-                          )}
-                          {order.status === 'processing' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleShipOrder(order.id)}
-                            >
-                              Ship
-                            </Button>
-                          )}
-                          {order.status !== 'pending' && (
-                            <Button variant="outline" size="sm">
-                              Details
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-500">Loading orders...</span>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Kitchen</TableHead>
+                      <TableHead>Store</TableHead>
+                      <TableHead>Order Date</TableHead>
+                      <TableHead>Delivery Date</TableHead>
+                      <TableHead>Products</TableHead>
+                      {/* Issue #6: "Qty" removed; Issue #7: "Shipments" count */}
+                      <TableHead>Shipments</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOrders.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center text-gray-400 py-8">
+                          No orders found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredOrders.map((order) => {
+                        const statusCfg =
+                          ORDER_STATUS[order.status ?? ""] ?? {
+                            label:     order.status ?? "—",
+                            className: "bg-gray-100 text-gray-700",
+                          };
+                        const nextStatus = NEXT_STATUS[order.status ?? ""];
+                        const isUpdating = updatingOrderId === order.storeOrderId;
+                        // Issue #7: shipment count + warning badge
+                        const linked = shipmentsByOrder[order.storeOrderId] ?? [];
+                        const needsShipment =
+                          ["Approved", "InProduction"].includes(order.status ?? "") &&
+                          linked.length === 0;
+
+                        return (
+                          <TableRow key={order.storeOrderId}>
+                            <TableCell className="font-medium text-gray-500">
+                              #{order.storeOrderId}
+                            </TableCell>
+                            <TableCell>{order.kitchenName ?? "—"}</TableCell>
+                            <TableCell>{order.storeName ?? "—"}</TableCell>
+                            <TableCell>
+                              {order.orderDate
+                                ? new Date(order.orderDate).toLocaleDateString("vi-VN")
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {order.deliveryDate
+                                ? new Date(order.deliveryDate).toLocaleDateString("vi-VN")
+                                : "—"}
+                            </TableCell>
+                            {/* Order Lines column */}
+                            <TableCell>
+                              {order.lines.length === 0 ? (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              ) : (
+                                <div className="space-y-0.5">
+                                  {order.lines.map((l) => (
+                                    <div key={l.storeOrderLineId} className="text-xs text-gray-600">
+                                      {l.productName ?? `#${l.productId}`}
+                                      {l.unit ? ` (${l.unit})` : ""}: {l.quantity}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </TableCell>
+                            {/* Issue #7: Shipments column */}
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Badge variant="outline">{linked.length}</Badge>
+                                {needsShipment && (
+                                  <span
+                                    title="No shipment created yet"
+                                    className="text-amber-500 text-sm"
+                                  >
+                                    ⚠
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1 items-center flex-wrap">
+                                {canUpdateOrderStatus && nextStatus && (
+                                  <Button
+                                    size="sm"
+                                    disabled={isUpdating}
+                                    onClick={() => handleAdvanceStatus(order)}
+                                  >
+                                    {isUpdating && (
+                                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                    )}
+                                    {NEXT_LABEL[order.status ?? ""]}
+                                  </Button>
+                                )}
+                                {canUpdateOrderStatus && order.status === "Pending" && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                    disabled={isUpdating}
+                                    onClick={() => handleRejectOrder(order)}
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
+                                {/* Issue #8: jump to Shipments tab filtered by this order */}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  title={`View shipments for Order #${order.storeOrderId}`}
+                                  onClick={() => {
+                                    setShipmentOrderFilter(order.storeOrderId);
+                                    setActiveTab("shipments");
+                                  }}
+                                >
+                                  <Truck className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* ── Shipments Tab ── */}
         <TabsContent value="shipments">
           <Card>
             <CardHeader>
-              <CardTitle>Shipment List</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <CardTitle>Shipment List</CardTitle>
+                  {/* Issue #8: active filter banner */}
+                  {shipmentOrderFilter && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                      Order #{shipmentOrderFilter}
+                      <button
+                        onClick={() => setShipmentOrderFilter(null)}
+                        className="font-bold hover:text-blue-800"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {/* Issue #2: Create Shipment button */}
+                {canCreateShipment && (
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setIsCreateShipmentOpen(true)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Shipment
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Shipment ID</TableHead>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Store</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Received Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {shipments.map((shipment) => (
-                    <TableRow key={shipment.id}>
-                      <TableCell className="font-medium">{shipment.shipmentId}</TableCell>
-                      <TableCell>{shipment.storeOrderId}</TableCell>
-                      <TableCell>{shipment.franchiseStore}</TableCell>
-                      <TableCell>{getShipmentStatusBadge(shipment.deliveryStatus)}</TableCell>
-                      <TableCell>
-                        {shipment.receivedDate || <span className="text-gray-400">-</span>}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm">
-                            Track
-                          </Button>
-                          {shipment.deliveryStatus === 'in-transit' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => handleConfirmDelivery(shipment.shipmentId)}
-                            >
-                              Confirm Delivery
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  <span className="ml-2 text-gray-500">Loading shipments...</span>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Shipment ID</TableHead>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Kitchen</TableHead>
+                      <TableHead>Shipment Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Received Date</TableHead>
+                      {/* Issue #3 (partial): richer product lines */}
+                      <TableHead>Product Lines</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredShipments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-gray-400 py-8">
+                          {shipmentOrderFilter
+                            ? `No shipments for Order #${shipmentOrderFilter}`
+                            : "No shipments found"}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredShipments.map((shipment) => {
+                        const statusCfg =
+                          SHIPMENT_STATUS[shipment.deliveryStatus ?? ""] ?? {
+                            label:     shipment.deliveryStatus ?? "—",
+                            className: "bg-gray-100 text-gray-700",
+                          };
+                        const isUpdatingShipment = updatingShipmentId === shipment.shipmentId;
+
+                        return (
+                          <TableRow key={shipment.shipmentId}>
+                            <TableCell className="font-medium text-gray-500">
+                              #{shipment.shipmentId}
+                            </TableCell>
+                            <TableCell>
+                              {/* Click order ID to filter */}
+                              <button
+                                className="text-blue-600 hover:underline text-sm font-medium"
+                                onClick={() => setShipmentOrderFilter(shipment.storeOrderId)}
+                              >
+                                #{shipment.storeOrderId}
+                              </button>
+                            </TableCell>
+                            <TableCell>{shipment.kitchenName ?? "—"}</TableCell>
+                            <TableCell>
+                              {shipment.shipmentDate
+                                ? new Date(shipment.shipmentDate).toLocaleDateString("vi-VN")
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statusCfg.className}>{statusCfg.label}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {shipment.receivedDate
+                                ? new Date(shipment.receivedDate).toLocaleDateString("vi-VN")
+                                : <span className="text-gray-400">—</span>}
+                            </TableCell>
+                            {/* Issue #3 (partial): shipped/received/damaged per product */}
+                            <TableCell>
+                              <div className="text-xs space-y-0.5 max-w-[200px]">
+                                {shipment.lines.length === 0 ? (
+                                  <span className="text-gray-400">No items</span>
+                                ) : (
+                                  <>
+                                    {shipment.lines.slice(0, 2).map((l) => (
+                                      <div key={l.shipmentLineId} className="text-gray-600">
+                                        <span className="font-medium">
+                                          {l.productName ?? `#${l.productId}`}
+                                        </span>
+                                        {": "}{l.shippedQuantity ?? 0} shipped
+                                        {l.receivedQuantity != null && (
+                                          <span className="text-green-600">
+                                            {" / "}{l.receivedQuantity} rcvd
+                                          </span>
+                                        )}
+                                        {l.damagedQuantity != null && l.damagedQuantity > 0 && (
+                                          <span className="text-red-500">
+                                            {" "}({l.damagedQuantity} dmg)
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {shipment.lines.length > 2 && (
+                                      <div className="text-gray-400">
+                                        +{shipment.lines.length - 2} more
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                {/* Issue #2: Start Delivery for Preparing shipments */}
+                                {canUpdateShipmentStatus &&
+                                  shipment.deliveryStatus === "Preparing" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={isUpdatingShipment}
+                                      onClick={() => handleAdvanceShipmentStatus(shipment)}
+                                    >
+                                      {isUpdatingShipment && (
+                                        <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                                      )}
+                                      Start Delivery
+                                    </Button>
+                                  )}
+                                {/* Receive for InDelivery shipments */}
+                                {canReceiveShipment &&
+                                  shipment.deliveryStatus === "InDelivery" && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => openReceive(shipment)}
+                                    >
+                                      <Package className="w-3 h-3 mr-1" />
+                                      Receive
+                                    </Button>
+                                  )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ── Create Order Dialog ── */}
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={(open) => { if (!submitting) setIsCreateOpen(open); }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create New Order</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <Label>
+                Central Kitchen <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={createForm.centralKitchenId ? String(createForm.centralKitchenId) : ""}
+                onValueChange={(v) =>
+                  setCreateForm((f) => ({ ...f, centralKitchenId: Number(v) }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select kitchen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {kitchens.map((k) => (
+                    <SelectItem key={k.centralKitchenId} value={String(k.centralKitchenId)}>
+                      {k.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>
+                Franchise Store <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={createForm.franchiseStoreId ? String(createForm.franchiseStoreId) : ""}
+                onValueChange={(v) =>
+                  setCreateForm((f) => ({ ...f, franchiseStoreId: Number(v) }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select store..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores.map((s) => (
+                    <SelectItem key={s.storeId} value={String(s.storeId)}>
+                      {s.storeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Delivery Date</Label>
+              <Input
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={createForm.deliveryDate ?? ""}
+                onChange={(e) =>
+                  setCreateForm((f) => ({
+                    ...f,
+                    deliveryDate: e.target.value || undefined,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Product lines */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>
+                  Products <span className="text-red-500">*</span>
+                </Label>
+                <Button type="button" size="sm" variant="outline" onClick={addOrderLine}>
+                  <Plus className="w-3 h-3 mr-1" /> Add Product
+                </Button>
+              </div>
+              {createForm.lines.length === 0 && (
+                <p className="text-xs text-muted-foreground">No products added yet.</p>
+              )}
+              {createForm.lines.map((line, idx) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <Select
+                    value={line.productId ? String(line.productId) : ""}
+                    onValueChange={(v) => updateOrderLine(idx, "productId", Number(v))}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select product..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.productId} value={String(p.productId)}>
+                          {p.productName}
+                          {p.unit ? ` (${p.unit})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    min={1}
+                    className="w-20"
+                    value={line.quantity}
+                    onChange={(e) =>
+                      updateOrderLine(idx, "quantity", Math.max(1, Number(e.target.value)))
+                    }
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => removeOrderLine(idx)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateOpen(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateOrder} disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Create Order
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Issue #2: Create Shipment Dialog ── */}
+      <Dialog
+        open={isCreateShipmentOpen}
+        onOpenChange={(open) => { if (!creatingShipment) setIsCreateShipmentOpen(open); }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Shipment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Order selector — only Approved / InProduction */}
+            <div className="space-y-1">
+              <Label>
+                Order <span className="text-red-500">*</span>
+              </Label>
+              {shipmentableOrders.length === 0 ? (
+                <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                  No orders in Approved or In Production status available.
+                </p>
+              ) : (
+                <Select
+                  value={shipmentForm.storeOrderId ? String(shipmentForm.storeOrderId) : ""}
+                  onValueChange={(v) => {
+                    const orderId = Number(v);
+                    const order   = orders.find((o) => o.storeOrderId === orderId);
+                    setShipmentForm((f) => ({
+                      ...f,
+                      storeOrderId:     orderId,
+                      centralKitchenId: order?.centralKitchenId ?? 0,
+                      // Pre-fill from order lines so kitchen knows what was ordered
+                      lines: order && order.lines.length > 0
+                        ? order.lines.map((l) => ({ productId: l.productId, shippedQuantity: l.quantity }))
+                        : [{ productId: 0, shippedQuantity: 1 }],
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select order..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shipmentableOrders.map((o) => (
+                      <SelectItem key={o.storeOrderId} value={String(o.storeOrderId)}>
+                        #{o.storeOrderId} — {o.storeName ?? "?"} ({o.status})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {shipmentForm.storeOrderId > 0 &&
+                orders.find((o) => o.storeOrderId === shipmentForm.storeOrderId)?.lines.length ? (
+                <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  Product lines pre-filled from the order — adjust shipped quantities as needed.
+                </p>
+              ) : null}
+            </div>
+
+            {/* Product lines */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>
+                  Product Lines <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={addShipmentLine}
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Add Line
+                </Button>
+              </div>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {shipmentForm.lines.map((line, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <Select
+                        value={line.productId ? String(line.productId) : ""}
+                        onValueChange={(v) =>
+                          updateShipmentLine(idx, "productId", Number(v))
+                        }
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select product..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products
+                            .filter((p) => p.status !== "Inactive")
+                            .map((p) => (
+                              <SelectItem key={p.productId} value={String(p.productId)}>
+                                {p.productName}
+                                {p.unit ? ` (${p.unit})` : ""}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-24">
+                      <Input
+                        type="number"
+                        className="h-9"
+                        min={1}
+                        placeholder="Qty"
+                        value={line.shippedQuantity}
+                        onChange={(e) =>
+                          updateShipmentLine(
+                            idx,
+                            "shippedQuantity",
+                            Math.max(1, Number(e.target.value) || 1)
+                          )
+                        }
+                      />
+                    </div>
+                    {shipmentForm.lines.length > 1 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-700 px-2"
+                        onClick={() => removeShipmentLine(idx)}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsCreateShipmentOpen(false)}
+              disabled={creatingShipment}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateShipment}
+              disabled={creatingShipment || shipmentableOrders.length === 0}
+            >
+              {creatingShipment && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Create Shipment
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Receive Shipment Dialog ── */}
+      <Dialog
+        open={!!receiveShipment}
+        onOpenChange={(open) => { if (!receiving && !open) setReceiveShipment(null); }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Receive Shipment #{receiveShipment?.shipmentId}
+            </DialogTitle>
+          </DialogHeader>
+          {receiveShipment && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-gray-600">
+                Confirm received and damaged quantities for each product line.
+              </p>
+              <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                {receiveShipment.lines.map((line, idx) => {
+                  const rl = receiveLines[idx];
+                  if (!rl) return null;
+                  return (
+                    <div
+                      key={line.shipmentLineId}
+                      className="p-3 bg-gray-50 rounded-lg space-y-2"
+                    >
+                      <p className="font-medium text-sm">
+                        {line.productName ?? `Product #${line.productId}`}
+                        <span className="text-gray-400 font-normal ml-2">
+                          (shipped: {line.shippedQuantity ?? 0})
+                        </span>
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Received Qty</Label>
+                          <Input
+                            type="number"
+                            className="h-8"
+                            value={rl.receivedQuantity ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : undefined;
+                              setReceiveLines((prev) =>
+                                prev.map((r, i) =>
+                                  i === idx ? { ...r, receivedQuantity: val } : r
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Damaged Qty</Label>
+                          <Input
+                            type="number"
+                            className="h-8"
+                            value={rl.damagedQuantity ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value ? Number(e.target.value) : undefined;
+                              setReceiveLines((prev) =>
+                                prev.map((r, i) =>
+                                  i === idx ? { ...r, damagedQuantity: val } : r
+                                )
+                              );
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setReceiveShipment(null)}
+                  disabled={receiving}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleReceive} disabled={receiving}>
+                  {receiving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Confirm Receipt
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

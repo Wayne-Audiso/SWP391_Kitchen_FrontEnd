@@ -479,6 +479,35 @@ const handleReceive = async () => {
     setReceiving(false); // Tắt loading
   }
 };
+//thêm logic tính toán thống kê và bộ lọc dữ liệu đơn/lô hàng
+// ── Stats ────────────────────────────────────────────────────────────────────
+// Tính toán các con số thống kê tổng quan (Thường dùng cho các thẻ Card/Header)
+const stats = {
+  total:     orders.length,
+  pending:   orders.filter((o) => o.status === "Pending").length,
+  // Đếm các đơn đang trong tiến trình xử lý (Đã duyệt, Đang sản xuất, Đang giao)
+  active:    orders.filter((o) =>
+    ["Approved", "InProduction", "InDelivery"].includes(o.status ?? "")
+  ).length,
+  completed: orders.filter((o) => o.status === "Completed").length,
+};
+
+// Lọc danh sách Đơn hàng hiển thị trên bảng
+const filteredOrders =
+  statusFilter === "all"
+    ? orders.filter((o) => o.status !== "Inactive") // Mặc định hiển thị tất cả trừ đơn đã hủy/vô hiệu hóa
+    : orders.filter((o) => o.status === statusFilter); // Lọc theo trạng thái cụ thể
+
+// Lọc danh sách Lô hàng (Shipments) theo ID Đơn hàng (Issue #8)
+const filteredShipments = shipmentOrderFilter
+  ? shipments.filter((s) => s.storeOrderId === shipmentOrderFilter) // Có bộ lọc thì tìm theo ID
+  : shipments; // Không có thì hiển thị toàn bộ lô hàng
+
+// Lọc ra các Đơn hàng đủ điều kiện để TẠO Lô hàng mới
+// (Thường dùng cho Dropdown/Select khi tạo Shipment: chỉ đơn Đã duyệt hoặc Đang sản xuất mới được gửi đi)
+const shipmentableOrders = orders.filter((o) =>
+  ["Approved", "InProduction"].includes(o.status ?? "")
+);
 
   return (
     <div className="p-8">

@@ -378,6 +378,46 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       ...f,
       lines: f.lines.map((l, i) => (i === idx ? { ...l, [field]: value } : l)),
     }));
+   //xử lý chuyển trạng thái lô hàng sang đang giao
+  // ── Issue #2: Advance Shipment status Preparing → InDelivery ─────────────────
+// Hàm xử lý việc chuyển trạng thái lô hàng từ "Đang chuẩn bị" sang "Đang giao"
+ const handleAdvanceShipmentStatus = async (shipment: ShipmentDto) => {
+   try {
+     // BƯỚC 1: Bật trạng thái Loading cho riêng lô hàng này
+     // Lưu lại ID của lô hàng đang thao tác. Thường dùng để hiển thị icon xoay xoay (spinner) 
+     // hoặc disable (khóa) đúng cái nút bấm của dòng lô hàng đó, tránh người dùng bấm đúp.
+     setUpdatingShipmentId(shipment.shipmentId);
+
+     // BƯỚC 2: Gọi API cập nhật trạng thái
+     // Gửi request lên server yêu cầu đổi deliveryStatus thành "InDelivery"
+     // Biến 'updated' sẽ nhận lại cục dữ liệu mới nhất của lô hàng sau khi server đã update thành công.
+     const updated = await shipmentsApi.updateStatus(shipment.shipmentId, {
+       deliveryStatus: "InDelivery",
+     });
+
+     // BƯỚC 3: Cập nhật giao diện (Cập nhật Local State)
+     // Thay vì phải gọi lại API lấy toàn bộ danh sách (fetch list) cho nặng máy,
+     // ta dùng hàm map() quét qua danh sách hiện tại: 
+     // Nếu ID trùng với ID lô hàng vừa sửa -> thay thế bằng data mới ('updated'). 
+     // Nếu không trùng -> giữ nguyên data cũ ('s').
+     setShipments((prev) =>
+       prev.map((s) => (s.shipmentId === updated.shipmentId ? updated : s))
+     );
+
+     // Hiển thị thông báo (toast) cho người dùng biết thao tác đã thành công
+     toast.success(`Shipment #${shipment.shipmentId} → In Delivery`);
+     
+   } catch {
+     // BƯỚC 4: Xử lý lỗi
+     // Để trống vì các lỗi API (như mất mạng, 400, 500) đã được bắt và hiển thị thông báo 
+     // tự động ở file cấu hình chung (axios interceptor).
+   } finally {
+     // BƯỚC 5: Dọn dẹp
+     // Luôn luôn chạy vào đây cuối cùng. Gán ID đang update về null để tắt hiệu ứng loading,
+     // mở khóa lại nút bấm bất kể quá trình trên là thành công hay thất bại.
+     setUpdatingShipmentId(null);
+   }
+ };
 
   return (
     <div className="p-8">

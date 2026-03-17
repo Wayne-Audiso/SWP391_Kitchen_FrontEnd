@@ -418,6 +418,67 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
      setUpdatingShipmentId(null);
    }
  };
+ //xử lý nghiệp vụ xác nhận nhận hàng và validate số lượng
+ // ── Receive shipment ─────────────────────────────────────────────────────────
+
+// Chuẩn bị dữ liệu khi mở form nhận hàng
+const openReceive = (shipment: ShipmentDto) => {
+  setReceiveShipment(shipment);
+  
+  // Khởi tạo danh sách sản phẩm: Mặc định coi như nhận đủ hàng (received = shipped) và không có hàng hỏng (damaged = 0)
+  setReceiveLines(
+    shipment.lines.map((l) => ({
+      shipmentLineId:   l.shipmentLineId,
+      receivedQuantity: l.shippedQuantity ?? 0,
+      damagedQuantity:  0,
+    }))
+  );
+};
+
+//Xử lý logic khi bấm nút Xác nhận nhận hàng
+const handleReceive = async () => {
+  if (!receiveShipment) return;
+
+  //  Kiểm tra logic (Validate) ---
+  for (const rl of receiveLines) {
+    const line    = receiveShipment.lines.find((l) => l.shipmentLineId === rl.shipmentLineId);
+    const shipped = line?.shippedQuantity ?? 0;
+    
+    // Bắt lỗi: Số lượng NHẬN không được lớn hơn số lượng GIAO
+    if ((rl.receivedQuantity ?? 0) > shipped) {
+      toast.error(`Received qty (${rl.receivedQuantity}) cannot exceed shipped qty (${shipped}) for ${line?.productName ?? "product"}`);
+      return;
+    }
+    
+    // Bắt lỗi: Số lượng HỎNG không được lớn hơn số lượng NHẬN
+    if ((rl.damagedQuantity ?? 0) > (rl.receivedQuantity ?? 0)) {
+      toast.error(`Damaged qty cannot exceed received qty for ${line?.productName ?? "product"}`);
+      return;
+    }
+  }
+
+  // Gọi API & Cập nhật UI 
+  try {
+    setReceiving(true); // Bật loading khóa nút bấm
+    
+    // Đẩy dữ liệu lên server
+    const updated = await shipmentsApi.receive(receiveShipment.shipmentId, {
+      lines: receiveLines,
+    });
+    
+    // Cập nhật lại data mới của lô hàng này vào danh sách tổng
+    setShipments((prev) =>
+      prev.map((s) => (s.shipmentId === updated.shipmentId ? updated : s))
+    );
+    
+    toast.success("Shipment received successfully");
+    setReceiveShipment(null); // Xóa state để đóng form
+  } catch {
+    // Lỗi đã có interceptor xử lý chung
+  } finally {
+    setReceiving(false); // Tắt loading
+  }
+};
 
   return (
     <div className="p-8">

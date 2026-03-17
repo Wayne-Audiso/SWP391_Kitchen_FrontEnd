@@ -20,21 +20,18 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for stored user session on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse stored user', error);
+      } catch {
         localStorage.removeItem('currentUser');
       }
     }
     setIsLoading(false);
   }, []);
 
-  // Listen for 401 unauthorized event from apiClient interceptor
   useEffect(() => {
     const handleUnauthorized = () => {
       setUser(null);
@@ -64,7 +61,6 @@ export default function App() {
     });
   }, [user?.name]);
 
-  // Show loading state while checking for stored session
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
@@ -76,7 +72,6 @@ export default function App() {
     );
   }
 
-  // Show login page if user is not logged in
   if (!user) {
     return (
       <>

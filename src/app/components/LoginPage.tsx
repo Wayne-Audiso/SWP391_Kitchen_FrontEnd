@@ -38,6 +38,15 @@ interface LoginPageProps {
 
 type LoginView = "default" | "register";
 
+const getApiErrorMessage = (err: object | null, fallback: string): string => {
+  if (!err) return fallback;
+  if (!('response' in err)) return fallback;
+  const response = (err as { response?: { data?: { message?: string } } }).response;
+  const message = response?.data?.message;
+  if (typeof message === 'string' && message.trim()) return message;
+  return fallback;
+};
+
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [view, setView] = useState<LoginView>("default");
   const [username, setUsername] = useState("");
@@ -45,13 +54,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Registration State
   const [regUsername, setRegUsername] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
 
-  // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
 
@@ -72,10 +79,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       };
 
       onLogin(user, response.token);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
-        "Tên đăng nhập hoặc mật khẩu không đúng.";
+    } catch (err) {
+      const message = getApiErrorMessage(
+        typeof err === 'object' ? err : null,
+        "Tên đăng nhập hoặc mật khẩu không đúng."
+      );
       setError(message);
     } finally {
       setIsLoading(false);
@@ -107,7 +115,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         confirmPassword: regConfirmPassword,
       });
 
-      // Tự động đăng nhập sau khi đăng ký
       const loginResponse = await authApi.login({
         username: regUsername,
         password: regPassword,
@@ -122,9 +129,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       };
 
       onLogin(user, loginResponse.token);
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.";
+    } catch (err) {
+      const message = getApiErrorMessage(
+        typeof err === 'object' ? err : null,
+        "Đăng ký thất bại. Vui lòng thử lại."
+      );
       setError(message);
     } finally {
       setIsLoading(false);
@@ -320,7 +329,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
-        {/* Left side - Branding */}
         <div className="hidden md:block space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -381,7 +389,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           </div>
         </div>
 
-        {/* Right side - Login Form */}
         <Card className="shadow-xl border-0">
           <CardHeader className="space-y-1 pb-0">
             <div className="md:hidden flex items-center gap-3 mb-4">

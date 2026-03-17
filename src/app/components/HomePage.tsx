@@ -27,40 +27,39 @@ import {
   Activity,
   CalendarClock,
   PackageCheck,
-  Bell
+  Bell,
+  type LucideIcon
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { getFunctionsByRole, type Role } from '@/app/utils/permissions';
+import type { User } from '@/app/components/LoginPage';
+import { getFunctionsByRole } from '@/app/utils/permissions';
 
 interface QuickAccessCard {
   id: string;
   title: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   bgColor: string;
   level: string;
 }
 
 export function HomePage() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       try {
         setCurrentUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse user', error);
+      } catch {
+        localStorage.removeItem('currentUser');
       }
     }
   }, []);
 
   const selectedRole = currentUser?.role || 'Franchise Store Staff';
 
-  // Map function IDs to icon, color, and bgColor
-  const functionIconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
-    // Admin Functions
+  const functionIconMap: Record<string, { icon: LucideIcon; color: string; bgColor: string }> = {
     'AD-02': { icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-100' },
     'AD-03': { icon: ShieldCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
     'AD-04': { icon: UserCog, color: 'text-blue-600', bgColor: 'bg-blue-100' },
@@ -71,7 +70,6 @@ export function HomePage() {
     'AD-09': { icon: Activity, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
     'AD-10': { icon: BarChart3, color: 'text-violet-600', bgColor: 'bg-violet-100' },
     
-    // Manager Functions
     'MG-01': { icon: LayoutDashboard, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     'MG-02': { icon: PackageCheck, color: 'text-pink-600', bgColor: 'bg-pink-100' },
     'MG-03': { icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-100' },
@@ -85,7 +83,6 @@ export function HomePage() {
     'MG-11': { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     'MG-12': { icon: FileText, color: 'text-gray-600', bgColor: 'bg-gray-100' },
     
-    // Franchise Store Staff Functions
     'FS-02': { icon: Store, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     'FS-03': { icon: Warehouse, color: 'text-orange-600', bgColor: 'bg-orange-100' },
     'FS-04': { icon: ShoppingCart, color: 'text-red-600', bgColor: 'bg-red-100' },
@@ -96,7 +93,6 @@ export function HomePage() {
     'FS-09': { icon: AlertCircle, color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
     'FS-10': { icon: BookOpen, color: 'text-violet-600', bgColor: 'bg-violet-100' },
     
-    // Central Kitchen Staff Functions
     'CK-02': { icon: ChefHat, color: 'text-orange-600', bgColor: 'bg-orange-100' },
     'CK-03': { icon: ShoppingCart, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     'CK-04': { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-100' },
@@ -108,7 +104,6 @@ export function HomePage() {
     'CK-10': { icon: PackageCheck, color: 'text-violet-600', bgColor: 'bg-violet-100' },
     'CK-11': { icon: AlertCircle, color: 'text-red-600', bgColor: 'bg-red-100' },
     
-    // Supply Coordinator Functions
     'SC-01': { icon: LayoutDashboard, color: 'text-blue-600', bgColor: 'bg-blue-100' },
     'SC-02': { icon: FileText, color: 'text-purple-600', bgColor: 'bg-purple-100' },
     'SC-03': { icon: ShoppingCart, color: 'text-orange-600', bgColor: 'bg-orange-100' },
@@ -123,7 +118,6 @@ export function HomePage() {
 
   const functions = getFunctionsByRole(selectedRole);
   
-  // Filter out Login/Logout functions and convert to QuickAccessCard format
   const quickAccessCards: QuickAccessCard[] = functions
     .filter(func => !func.title.includes('Login') && !func.title.includes('Logout'))
     .map(func => {
@@ -189,19 +183,6 @@ export function HomePage() {
     return <AlertCircle className="w-4 h-4 text-blue-600" />;
   };
 
-  const getLevelBadgeColor = (level: string) => {
-    switch (level) {
-      case 'Simple':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'Medium':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Complex':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'Admin':
@@ -221,7 +202,6 @@ export function HomePage() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
-      {/* Header Section */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -241,7 +221,6 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="pt-6">
@@ -292,7 +271,6 @@ export function HomePage() {
         </Card>
       </div>
 
-      {/* Quick Access Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -333,9 +311,7 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Bottom Section - Activities & Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -360,7 +336,6 @@ export function HomePage() {
           </CardContent>
         </Card>
 
-        {/* Pending Tasks */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

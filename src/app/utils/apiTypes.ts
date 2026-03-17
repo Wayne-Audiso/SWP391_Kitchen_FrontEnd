@@ -1,14 +1,16 @@
-// ── Wrapper thống nhất từ backend ApiResult<T> ───────────────────────────────
+export type JsonPrimitive = string | number | boolean | null;
+
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
 export interface ApiResult<T> {
   success: boolean;
   message: string;
   data: T | null;
   statusCode: number;
   errors: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, JsonValue>;
 }
 
-// Common API response types (legacy)
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

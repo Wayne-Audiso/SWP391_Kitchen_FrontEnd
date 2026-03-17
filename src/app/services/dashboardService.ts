@@ -2,6 +2,7 @@ import { api } from '@/app/utils/apiClient';
 import type {
   ApiResponse,
   DashboardStats,
+  JsonValue,
 } from '@/app/utils/apiTypes';
 
 export const dashboardApi = {
@@ -10,35 +11,33 @@ export const dashboardApi = {
     return response.data;
   },
 
-  getRecentActivities: async (params?: { limit?: number }): Promise<ApiResponse<any[]>> => {
-    const response = await api.get<ApiResponse<any[]>>('/dashboard/activities', { params });
+  getRecentActivities: async (params?: { limit?: number }): Promise<ApiResponse<JsonValue[]>> => {
+    const response = await api.get<ApiResponse<JsonValue[]>>('/dashboard/activities', { params });
     return response.data;
   },
 
-  getPendingTasks: async (): Promise<ApiResponse<any[]>> => {
-    const response = await api.get<ApiResponse<any[]>>('/dashboard/tasks');
+  getPendingTasks: async (): Promise<ApiResponse<JsonValue[]>> => {
+    const response = await api.get<ApiResponse<JsonValue[]>>('/dashboard/tasks');
     return response.data;
   },
 
-  // Analytics
-  getOrdersAnalytics: async (params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<any>> => {
-    const response = await api.get<ApiResponse<any>>('/dashboard/analytics/orders', { params });
+  getOrdersAnalytics: async (params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<JsonValue>> => {
+    const response = await api.get<ApiResponse<JsonValue>>('/dashboard/analytics/orders', { params });
     return response.data;
   },
 
-  getProductionAnalytics: async (params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<any>> => {
-    const response = await api.get<ApiResponse<any>>('/dashboard/analytics/production', { params });
+  getProductionAnalytics: async (params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<JsonValue>> => {
+    const response = await api.get<ApiResponse<JsonValue>>('/dashboard/analytics/production', { params });
     return response.data;
   },
 
-  getInventoryAnalytics: async (): Promise<ApiResponse<any>> => {
-    const response = await api.get<ApiResponse<any>>('/dashboard/analytics/inventory');
+  getInventoryAnalytics: async (): Promise<ApiResponse<JsonValue>> => {
+    const response = await api.get<ApiResponse<JsonValue>>('/dashboard/analytics/inventory');
     return response.data;
   },
 
-  // Reports
-  generateReport: async (type: string, params?: any): Promise<ApiResponse<any>> => {
-    const response = await api.post<ApiResponse<any>>('/dashboard/reports/generate', { type, ...params });
+  generateReport: async (type: string, params?: Record<string, JsonValue>): Promise<ApiResponse<JsonValue>> => {
+    const response = await api.post<ApiResponse<JsonValue>>('/dashboard/reports/generate', { type, ...params });
     return response.data;
   },
 

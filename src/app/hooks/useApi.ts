@@ -2,27 +2,31 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 export interface UseApiOptions {
-  immediate?: boolean; // Auto-fetch on mount
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  immediate?: boolean;
+  onSuccess?: (data: object) => void;
+  onError?: (error: Error) => void;
 }
 
 export interface UseApiReturn<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  execute: (...args: any[]) => Promise<T | null>;
+  execute: (...args: (string | number | boolean | null | object)[]) => Promise<T | null>;
   reset: () => void;
 }
 
-/**
- * Custom hook for making API calls with loading and error states
- * @param apiFunction - The API function to call
- * @param options - Configuration options
- */
-export function useApi<T = any>(
-  apiFunction: (...args: any[]) => Promise<any>,
-  options: UseApiOptions = {}
+type ApiArg = string | number | boolean | null | object;
+
+type ApiResponseLike<T> = { data: T } | T;
+
+const toError = (err: object | null): Error => {
+  if (err instanceof Error) return err;
+  return new Error('An unexpected error occurred.');
+};
+
+export function useApi<T extends object>(
+  apiFunction: (...args: ApiArg[]) => Promise<ApiResponseLike<T>>,
+  options: Omit<UseApiOptions, 'onSuccess'> & { onSuccess?: (data: T) => void } = {}
 ): UseApiReturn<T> {
   const { immediate = false, onSuccess, onError } = options;
 
@@ -31,13 +35,15 @@ export function useApi<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   const execute = useCallback(
-    async (...args: any[]): Promise<T | null> => {
+    async (...args: ApiArg[]): Promise<T | null> => {
       try {
         setLoading(true);
         setError(null);
 
         const response = await apiFunction(...args);
-        const result = response?.data || response;
+        const result = typeof response === 'object' && response !== null && 'data' in response
+          ? (response as { data: T }).data
+          : (response as T);
 
         setData(result);
 
@@ -46,8 +52,8 @@ export function useApi<T = any>(
         }
 
         return result;
-      } catch (err: any) {
-        const errorObj = err as Error;
+      } catch (err) {
+        const errorObj = typeof err === 'object' ? toError(err) : new Error('An unexpected error occurred.');
         setError(errorObj);
 
         if (onError) {
@@ -103,8 +109,12 @@ export interface UsePaginatedApiReturn<T> extends UseApiReturn<T[]> {
   refresh: () => void;
 }
 
-export function usePaginatedApi<T = any>(
-  apiFunction: (params: any) => Promise<any>,
+type PaginationInfo = { total: number; totalPages: number };
+
+type WithPagination<T> = T & { pagination?: PaginationInfo };
+
+export function usePaginatedApi<T extends object>(
+  apiFunction: (params: object) => Promise<ApiResponseLike<WithPagination<T[]>>>,
   options: UsePaginatedApiOptions = {}
 ): UsePaginatedApiReturn<T> {
   const { initialPage = 1, initialPageSize = 10, ...apiOptions } = options;
@@ -117,7 +127,7 @@ export function usePaginatedApi<T = any>(
   const apiHook = useApi<T[]>(apiFunction, apiOptions);
 
   const execute = useCallback(
-    async (customParams?: any) => {
+    async (customParams?: object) => {
       const params = {
         page,
         pageSize,
@@ -126,10 +136,12 @@ export function usePaginatedApi<T = any>(
 
       const response = await apiHook.execute(params);
 
-      if (response && (response as any).pagination) {
-        const paginationData = (response as any).pagination;
-        setTotal(paginationData.total);
-        setTotalPages(paginationData.totalPages);
+      if (response && typeof response === 'object' && Object.prototype.hasOwnProperty.call(response, 'pagination')) {
+        const pagination = (response as { pagination?: PaginationInfo }).pagination;
+        if (pagination) {
+          setTotal(pagination.total);
+          setTotalPages(pagination.totalPages);
+        }
       }
 
       return response;
@@ -178,8 +190,8 @@ export function usePaginatedApi<T = any>(
  * Hook for mutations (POST, PUT, PATCH, DELETE)
  */
 export interface UseMutationOptions {
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: object) => void;
+  onError?: (error: Error) => void;
   successMessage?: string;
   errorMessage?: string;
 }
@@ -188,13 +200,13 @@ export interface UseMutationReturn<T> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  mutate: (...args: any[]) => Promise<T | null>;
+  mutate: (...args: ApiArg[]) => Promise<T | null>;
   reset: () => void;
 }
 
-export function useMutation<T = any>(
-  apiFunction: (...args: any[]) => Promise<any>,
-  options: UseMutationOptions = {}
+export function useMutation<T extends object>(
+  apiFunction: (...args: ApiArg[]) => Promise<ApiResponseLike<T>>,
+  options: Omit<UseMutationOptions, 'onSuccess'> & { onSuccess?: (data: T) => void } = {}
 ): UseMutationReturn<T> {
   const { onSuccess, onError, successMessage, errorMessage } = options;
 
@@ -203,13 +215,15 @@ export function useMutation<T = any>(
   const [error, setError] = useState<Error | null>(null);
 
   const mutate = useCallback(
-    async (...args: any[]): Promise<T | null> => {
+    async (...args: ApiArg[]): Promise<T | null> => {
       try {
         setLoading(true);
         setError(null);
 
         const response = await apiFunction(...args);
-        const result = response?.data || response;
+        const result = typeof response === 'object' && response !== null && 'data' in response
+          ? (response as { data: T }).data
+          : (response as T);
 
         setData(result);
 
@@ -222,8 +236,8 @@ export function useMutation<T = any>(
         }
 
         return result;
-      } catch (err: any) {
-        const errorObj = err as Error;
+      } catch (err) {
+        const errorObj = typeof err === 'object' ? toError(err) : new Error('An unexpected error occurred.');
         setError(errorObj);
 
         if (errorMessage) {

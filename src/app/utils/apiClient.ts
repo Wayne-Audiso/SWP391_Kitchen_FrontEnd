@@ -1,10 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import { toast } from 'sonner';
 
-// API Base URL - backend chạy trên http://localhost:5000 (hoặc set VITE_API_BASE_URL trong .env)
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-// Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
@@ -13,24 +11,28 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - add auth token
+type StoredUserHeaderInfo = { id: string; role: string };
+
+type ApiErrorResponse = { message?: string };
+
 apiClient.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Get current user for logging
     const userStr = localStorage.getItem('currentUser');
     if (userStr) {
       try {
-        const user = JSON.parse(userStr);
-        config.headers['X-User-ID'] = user.id;
-        config.headers['X-User-Role'] = user.role;
-      } catch (error) {
-        console.error('Error parsing user from localStorage', error);
+        const parsed = JSON.parse(userStr);
+        if (parsed && typeof parsed === 'object' && 'id' in parsed && 'role' in parsed) {
+          const user = parsed as StoredUserHeaderInfo;
+          config.headers['X-User-ID'] = user.id;
+          config.headers['X-User-Role'] = user.role;
+        }
+      } catch {
+        localStorage.removeItem('currentUser');
       }
     }
     
@@ -41,16 +43,14 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle errors globally
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
-  (error: AxiosError) => {
-    // Handle different error status codes
+  (error: AxiosError<ApiErrorResponse>) => {
     if (error.response) {
       const status = error.response.status;
-      const message = (error.response.data as any)?.message || 'An error occurred';
+      const message = error.response.data?.message || 'An error occurred';
       
       switch (status) {
         case 400:
@@ -60,7 +60,7 @@ apiClient.interceptors.response.use(
           toast.error('Unauthorized. Please login again.');
           localStorage.removeItem('authToken');
           localStorage.removeItem('currentUser');
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          globalThis.dispatchEvent(new CustomEvent('auth:unauthorized'));
           break;
         case 403:
           toast.error('Forbidden. You don\'t have permission.');
@@ -75,7 +75,6 @@ apiClient.interceptors.response.use(
           toast.error(`Error: ${message}`);
       }
     } else if (error.request) {
-      // Network error
       toast.error('Network error. Please check your connection.');
     } else {
       toast.error('An unexpected error occurred.');
@@ -85,25 +84,24 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Generic API methods
 export const api = {
-  get: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+  get: <T = object>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     return apiClient.get<T>(url, config);
   },
   
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+  post: <T = object>(url: string, data?: object, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     return apiClient.post<T>(url, data, config);
   },
   
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+  put: <T = object>(url: string, data?: object, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     return apiClient.put<T>(url, data, config);
   },
   
-  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+  patch: <T = object>(url: string, data?: object, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     return apiClient.patch<T>(url, data, config);
   },
   
-  delete: <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+  delete: <T = object>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
     return apiClient.delete<T>(url, config);
   },
 };

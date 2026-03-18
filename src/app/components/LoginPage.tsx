@@ -67,7 +67,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       setIsLoading(false);
     }
   };
-
+//Add handleRegister function with validation
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");

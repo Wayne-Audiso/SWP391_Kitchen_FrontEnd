@@ -227,7 +227,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
         linked.length > 0 && linked.every((s) => s.deliveryStatus === "Delivered");
       if (!allDelivered) {
         toast.warning(
-          `Order #${order.storeOrderId} has shipments that are not yet Delivered. Proceed with caution.`
+          `Đơn hàng #${order.storeOrderId} có các lô hàng chưa được giao. Hãy thận trọng.`
         );
       }
     }
@@ -238,7 +238,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setOrders((prev) =>
         prev.map((o) => (o.storeOrderId === updated.storeOrderId ? updated : o))
       );
-      toast.success(`Order #${order.storeOrderId} → ${ORDER_STATUS[next]?.label}`);
+      toast.success(`Đơn hàng #${order.storeOrderId} → ${ORDER_STATUS[next]?.label}`);
     } catch {
       // handled by interceptor
     } finally {
@@ -255,7 +255,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       setOrders((prev) =>
         prev.map((o) => (o.storeOrderId === updated.storeOrderId ? updated : o))
       );
-      toast.success(`Order #${order.storeOrderId} rejected`);
+      toast.success(`Đơn hàng #${order.storeOrderId} bị từ chối`);
     } catch {
       // handled by interceptor
     } finally {
@@ -266,27 +266,27 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   // ── Create order ─────────────────────────────────────────────────────────────
   const handleCreateOrder = async () => {
     if (!createForm.centralKitchenId || !createForm.franchiseStoreId) {
-      toast.error("Please select a kitchen and a store");
+      toast.error("Vui lòng chọn một nhà bếp và một cửa hàng.");
       return;
     }
     if (createForm.lines.length === 0) {
-      toast.error("Add at least one product line");
+      toast.error("Thêm ít nhất một dòng sản phẩm");
       return;
     }
     if (createForm.lines.some((l) => !l.productId || l.quantity < 1)) {
-      toast.error("Each line must have a product and quantity ≥ 1");
+      toast.error("Mỗi dòng phải có sản phẩm và số lượng ≥ 1");
       return;
     }
     const pids = createForm.lines.map((l) => l.productId);
     if (new Set(pids).size !== pids.length) {
-      toast.error("The same product cannot appear twice in one order");
+      toast.error("Sản phẩm giống nhau không thể xuất hiện hai lần trong cùng một đơn hàng.");
       return;
     }
     try {
       setSubmitting(true);
       const newOrder = await storeOrdersApi.create(createForm);
       setOrders((prev) => [newOrder, ...prev]);
-      toast.success("Order created successfully");
+      toast.success("Ngày giao hàng không được là ngày trong quá khứ");
       setIsCreateOpen(false);
       setCreateForm({
         centralKitchenId: 0,
@@ -318,14 +318,14 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
   const handleCreateShipment = async () => {
     //Kiểm tra: Bắt buộc phải chọn một Đơn hàng trước
     if (!shipmentForm.storeOrderId) {
-      toast.error("Please select an order");
+      toast.error("Vui lòng chọn một đơn hàng");
       return;
     }
     // Lọc bỏ các dòng trống (người dùng bấm Add nhưng chưa chọn sản phẩm)
     const validLines = shipmentForm.lines.filter((l) => l.productId > 0);
     //// Kiểm tra: Phải có ít nhất 1 sản phẩm hợp lệ mới cho đi tiếp
     if (validLines.length === 0) {
-      toast.error("Please add at least one product line");
+      toast.error("Vui lòng thêm ít nhất một dòng sản phẩm.");
       return;
     }
     try {
@@ -341,7 +341,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
       });
       // Ép lô hàng mới lên đầu danh sách hiển thị
       setShipments((prev) => [newShipment, ...prev]);
-      toast.success(`Shipment #${newShipment.shipmentId} created`);
+      toast.success(`Đơn hàng #${newShipment.shipmentId} đã được tạo`);
       // Đóng form và reset dữ liệu về trạng thái trống ban đầu
       setIsCreateShipmentOpen(false);
       setShipmentForm({
@@ -405,7 +405,7 @@ const [isCreateShipmentOpen, setIsCreateShipmentOpen] = useState(false);
      );
 
      // Hiển thị thông báo (toast) cho người dùng biết thao tác đã thành công
-     toast.success(`Shipment #${shipment.shipmentId} → In Delivery`);
+     toast.success(`Shipment #${shipment.shipmentId} → InDelivery`);
      
    } catch {
      // BƯỚC 4: Xử lý lỗi
@@ -446,13 +446,13 @@ const handleReceive = async () => {
     
     // Bắt lỗi: Số lượng NHẬN không được lớn hơn số lượng GIAO
     if ((rl.receivedQuantity ?? 0) > shipped) {
-      toast.error(`Received qty (${rl.receivedQuantity}) cannot exceed shipped qty (${shipped}) for ${line?.productName ?? "product"}`);
+      toast.error(`Số lượng đã nhận (${rl.receivedQuantity}) không được vượt quá số lượng hàng đã giao (${shipped}) vì ${line?.productName ?? "product"}`);
       return;
     }
     
     // Bắt lỗi: Số lượng HỎNG không được lớn hơn số lượng NHẬN
     if ((rl.damagedQuantity ?? 0) > (rl.receivedQuantity ?? 0)) {
-      toast.error(`Damaged qty cannot exceed received qty for ${line?.productName ?? "product"}`);
+      toast.error(`Số lượng hàng hư hỏng không được vượt quá số lượng hàng nhận được. ${line?.productName ?? "product"}`);
       return;
     }
   }
@@ -471,7 +471,7 @@ const handleReceive = async () => {
       prev.map((s) => (s.shipmentId === updated.shipmentId ? updated : s))
     );
     
-    toast.success("Shipment received successfully");
+    toast.success("Đã nhận hàng thành công.");
     setReceiveShipment(null); // Xóa state để đóng form
   } catch {
     // Lỗi đã có interceptor xử lý chung

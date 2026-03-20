@@ -1,12 +1,34 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { Store, Lock, User as UserIcon, AlertCircle, ArrowLeft, Mail, Building, Eye, EyeOff } from 'lucide-react';
-import { Alert, AlertDescription } from '@/app/components/ui/alert';
-// Định nghĩa kiểu dữ liệu User, Định nghĩa props onLogin, Tạo type chuyển đổi view login/register
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import {
+  Store,
+  Lock,
+  User as UserIcon,
+  AlertCircle,
+  ArrowLeft,
+  Mail,
+  Eye,
+  EyeOff,
+  Phone,
+  MapPin,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/app/components/ui/alert";
+import { authApi } from "@/app/services/authService";
+
+const VN_PHONE_REGEX =
+  /^(0|\+84)(3[2-9]|5[25689]|7[06789]|8[0-9]|9[0-9])[0-9]{7}$/;
+const MIN_PASSWORD_LENGTH = 6;
+const MIN_ADDRESS_LENGTH = 10;
+
 export interface User {
   id: string;
   username: string;
@@ -24,7 +46,6 @@ interface LoginPageProps {
 type LoginView = "default" | "register";
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  // Lưu username/password, Quản lý loading khi gọi API,Hiển thị lỗi nếu login thất bại
   const [view, setView] = useState<LoginView>("default");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -36,14 +57,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regAddress, setRegAddress] = useState("");
 
   // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
-// Xử ly dang nhap
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -67,23 +96,47 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       setIsLoading(false);
     }
   };
-//Add handleRegister function with validation
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
 
     if (!regUsername || !regEmail || !regPassword || !regConfirmPassword) {
       setError("Vui lòng điền đầy đủ thông tin.");
-      setIsLoading(false);
+      return;
+    }
+
+    if (regUsername.length < 5) {
+      setError("Tên đăng nhập phải có ít nhất 5 ký tự.");
+      return;
+    }
+
+    if (regUsername.length > 20) {
+      setError("Tên đăng nhập không được vượt quá 20 ký tự.");
+      return;
+    }
+
+    if (regPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(`Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`);
       return;
     }
 
     if (regPassword !== regConfirmPassword) {
       setError("Mật khẩu xác nhận không khớp.");
-      setIsLoading(false);
       return;
     }
+
+    if (regPhone && !VN_PHONE_REGEX.test(regPhone)) {
+      setError("Số điện thoại không đúng định dạng Việt Nam (VD: 0901234567).");
+      return;
+    }
+
+    if (regAddress && regAddress.length < MIN_ADDRESS_LENGTH) {
+      setError(`Địa chỉ phải có ít nhất ${MIN_ADDRESS_LENGTH} ký tự.`);
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       await authApi.register({
@@ -91,6 +144,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         email: regEmail,
         password: regPassword,
         confirmPassword: regConfirmPassword,
+        phoneNumber: regPhone || undefined,
+        address: regAddress || undefined,
       });
 
       // Tự động đăng nhập sau khi đăng ký
@@ -285,6 +340,41 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               onChange={(e) => setRegConfirmPassword(e.target.value)}
               className="pl-10"
               required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="reg_phone">
+            Số điện thoại{" "}
+            <span className="text-gray-400 text-xs">(không bắt buộc)</span>
+          </Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="reg_phone"
+              type="tel"
+              placeholder="0901234567"
+              value={regPhone}
+              onChange={(e) => setRegPhone(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="reg_address">
+            Địa chỉ{" "}
+            <span className="text-gray-400 text-xs">(không bắt buộc, tối thiểu 10 ký tự)</span>
+          </Label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="reg_address"
+              placeholder="123 Đường ABC, Quận 1, TP.HCM"
+              value={regAddress}
+              onChange={(e) => setRegAddress(e.target.value)}
+              className="pl-10"
             />
           </div>
         </div>

@@ -247,6 +247,8 @@ export function Production() {
               </TableRow>
             </TableHeader>
             <TableBody>
+
+              {/* Duyệt qua mảng kế hoạch đã lọc và render từng hàng (row) */}
               {filteredPlans.map((plan) => (
                 <TableRow key={plan.id}>
                   <TableCell className="font-medium">{plan.id}</TableCell>
@@ -256,6 +258,7 @@ export function Production() {
                   <TableCell>{getStatusBadge(plan.status)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {/* Nếu chưa bắt đầu ('planned'), hiện nút Start */}
                       {plan.status === 'planned' && (
                         <Button 
                           size="sm"
@@ -264,6 +267,8 @@ export function Production() {
                           Start Production
                         </Button>
                       )}
+
+                      {/* Nếu đã bắt đầu rồi, chỉ hiện nút Xem chi tiết */}
                       {plan.status !== 'planned' && (
                         <Button variant="outline" size="sm">
                           View Details
@@ -278,7 +283,7 @@ export function Production() {
         </CardContent>
       </Card>
 
-      {/* Production Batches */}
+      {/* --- BẢNG PRODUCTION BATCHES (LÔ SẢN XUẤT) --- */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -299,6 +304,7 @@ export function Production() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {/* Duyệt mảng các lô sản xuất và render ra bảng */}
               {batches.map((batch) => (
                 <TableRow key={batch.id}>
                   <TableCell className="font-medium">{batch.batchId}</TableCell>
@@ -311,6 +317,7 @@ export function Production() {
                       <Button variant="outline" size="sm">
                         View
                       </Button>
+                      {/* Nút Complete chỉ hiển thị nếu lô hàng đang ở trạng thái 'in-progress' */}
                       {batch.status === 'in-progress' && (
                         <Button 
                           size="sm"

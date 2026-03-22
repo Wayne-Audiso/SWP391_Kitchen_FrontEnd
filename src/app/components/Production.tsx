@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Calendar, Package, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Định nghĩa cấu trúc dữ liệu cho một Kế hoạch sản xuất
 interface ProductionPlan {
   id: string;
   productName: string;
@@ -18,6 +19,7 @@ interface ProductionPlan {
   status: 'planned' | 'in-progress' | 'completed';
 }
 
+// Định nghĩa cấu trúc dữ liệu cho một Lô sản xuất
 interface ProductionBatch {
   id: string;
   productName: string;
@@ -27,6 +29,7 @@ interface ProductionBatch {
   status: 'in-progress' | 'completed' | 'quality-check';
 }
 
+// Khởi tạo dữ liệu mẫu cho Kế hoạch sản xuất
 const initialPlans: ProductionPlan[] = [
   { id: 'PP-001', productName: 'Fresh Bread', planDate: '2026-01-21', quantity: 500, status: 'planned' },
   { id: 'PP-002', productName: 'Croissant', planDate: '2026-01-21', quantity: 300, status: 'in-progress' },
@@ -34,31 +37,36 @@ const initialPlans: ProductionPlan[] = [
   { id: 'PP-004', productName: 'Basic Pizza', planDate: '2026-01-22', quantity: 200, status: 'planned' },
 ];
 
+// Khởi tạo dữ liệu mẫu cho Lô sản xuất
 const initialBatches: ProductionBatch[] = [
   { id: '1', productName: 'Croissant', batchId: 'PB-1045', quantity: 150, startDate: '2026-01-20 08:00', status: 'in-progress' },
   { id: '2', productName: 'Fresh Bread', batchId: 'PB-1044', quantity: 500, startDate: '2026-01-20 06:00', status: 'quality-check' },
   { id: '3', productName: 'Sandwich', batchId: 'PB-1043', quantity: 400, startDate: '2026-01-19 14:00', status: 'completed' },
 ];
 
+// Component chính quản lý phân hệ Sản xuất
 export function Production() {
   const [plans, setPlans] = useState<ProductionPlan[]>(initialPlans);
   const [batches, setBatches] = useState<ProductionBatch[]>(initialBatches);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   
-  // Form state
+
+  // State lưu trữ dữ liệu nhập vào từ form tạo kế hoạch mới
   const [newPlan, setNewPlan] = useState({
     productName: '',
     planDate: '',
     quantity: '',
   });
 
+  // Hàm xử lý sự kiện khi nhấn nút "Create Plan"
   const handleCreatePlan = () => {
     if (!newPlan.productName || !newPlan.planDate || !newPlan.quantity) {
       toast.error('Please fill in all fields');
       return;
     }
 
+    // Tạo object kế hoạch mới
     const plan: ProductionPlan = {
       id: `PP-${String(plans.length + 1).padStart(3, '0')}`,
       productName: newPlan.productName,
@@ -67,17 +75,23 @@ export function Production() {
       status: 'planned',
     };
 
+    // Cập nhật danh sách kế hoạch
     setPlans([plan, ...plans]);
+
+    // Đóng popup, reset form và hiện thông báo thành công
     setIsDialogOpen(false);
     setNewPlan({ productName: '', planDate: '', quantity: '' });
     toast.success('Production plan created successfully!');
   };
 
+  // Hàm xử lý khi nhấn "Start Production"
   const handleStartProduction = (planId: string) => {
+    // 1. Cập nhật trạng thái của kế hoạch đó thành 'in-progress'
     setPlans(plans.map(p => 
       p.id === planId ? { ...p, status: 'in-progress' as const } : p
     ));
     
+    // 2. Tìm kế hoạch đó và tạo ra một lô sản xuất (batch) tương ứng
     const plan = plans.find(p => p.id === planId);
     if (plan) {
       const newBatch: ProductionBatch = {
@@ -93,6 +107,7 @@ export function Production() {
     }
   };
 
+  // Hàm xử lý khi nhấn "Complete" (Hoàn thành một lô sản xuất)
   const handleCompleteBatch = (batchId: string) => {
     setBatches(batches.map(b => 
       b.batchId === batchId ? { ...b, status: 'completed' as const } : b
@@ -100,6 +115,7 @@ export function Production() {
     toast.success('Production batch completed!');
   };
 
+  // Hàm tiện ích: Trả về một thẻ Badge (nhãn màu) tùy thuộc vào trạng thái
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       'planned': { label: 'Planned', className: 'bg-blue-100 text-blue-700' },
@@ -111,17 +127,23 @@ export function Production() {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
+  // Lọc danh sách kế hoạch dựa trên lựa chọn filter hiện tại
   const filteredPlans = filterStatus === 'all' 
     ? plans 
     : plans.filter(p => p.status === filterStatus);
 
+
+    // --- BẮT ĐẦU PHẦN RENDER GIAO DIỆN CHÍNH ---
   return (
     <div className="p-8">
+    {/* Tiêu đề trang và Nút mở Popup tạo kế hoạch */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Production Management</h2>
           <p className="text-gray-600 mt-2">Plan and track production operations</p>
         </div>
+
+        {/* Hộp thoại (Dialog) để thêm Kế hoạch sản xuất */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -133,7 +155,11 @@ export function Production() {
             <DialogHeader>
               <DialogTitle>Create Production Plan</DialogTitle>
             </DialogHeader>
+
+            {/* Form nhập liệu bên trong Dialog */}
             <div className="space-y-4 py-4">
+
+            {/* Chọn sản phẩm */}
               <div className="space-y-2">
                 <Label>Product</Label>
                 <Select value={newPlan.productName} onValueChange={(value) => setNewPlan({...newPlan, productName: value})}>
@@ -148,6 +174,8 @@ export function Production() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Chọn ngày */}
               <div className="space-y-2">
                 <Label>Production Date</Label>
                 <Input 
@@ -156,6 +184,8 @@ export function Production() {
                   onChange={(e) => setNewPlan({...newPlan, planDate: e.target.value})}
                 />
               </div>
+
+              {/* Nhập số lượng */}
               <div className="space-y-2">
                 <Label>Quantity (kg/pcs)</Label>
                 <Input 
@@ -166,6 +196,8 @@ export function Production() {
                 />
               </div>
             </div>
+
+            {/* Các nút hành động của Dialog */}
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
@@ -178,7 +210,7 @@ export function Production() {
         </Dialog>
       </div>
 
-      {/* Production Plans */}
+      {/* ---  BẢNG PRODUCTION PLANS (KẾ HOẠCH SẢN XUẤT) --- */}
       <Card className="mb-8">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -186,6 +218,8 @@ export function Production() {
               <Calendar className="w-5 h-5" />
               Production Plans
             </CardTitle>
+
+            {/* Bộ lọc (Dropdown) để lọc kế hoạch theo trạng thái */}
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-40">
                 <Filter className="w-4 h-4 mr-2" />
@@ -213,6 +247,8 @@ export function Production() {
               </TableRow>
             </TableHeader>
             <TableBody>
+
+              {/* Duyệt qua mảng kế hoạch đã lọc và render từng hàng (row) */}
               {filteredPlans.map((plan) => (
                 <TableRow key={plan.id}>
                   <TableCell className="font-medium">{plan.id}</TableCell>
@@ -222,6 +258,7 @@ export function Production() {
                   <TableCell>{getStatusBadge(plan.status)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {/* Nếu chưa bắt đầu ('planned'), hiện nút Start */}
                       {plan.status === 'planned' && (
                         <Button 
                           size="sm"
@@ -230,6 +267,8 @@ export function Production() {
                           Start Production
                         </Button>
                       )}
+
+                      {/* Nếu đã bắt đầu rồi, chỉ hiện nút Xem chi tiết */}
                       {plan.status !== 'planned' && (
                         <Button variant="outline" size="sm">
                           View Details
@@ -244,7 +283,7 @@ export function Production() {
         </CardContent>
       </Card>
 
-      {/* Production Batches */}
+      {/* --- BẢNG PRODUCTION BATCHES (LÔ SẢN XUẤT) --- */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -265,6 +304,7 @@ export function Production() {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {/* Duyệt mảng các lô sản xuất và render ra bảng */}
               {batches.map((batch) => (
                 <TableRow key={batch.id}>
                   <TableCell className="font-medium">{batch.batchId}</TableCell>
@@ -277,6 +317,7 @@ export function Production() {
                       <Button variant="outline" size="sm">
                         View
                       </Button>
+                      {/* Nút Complete chỉ hiển thị nếu lô hàng đang ở trạng thái 'in-progress' */}
                       {batch.status === 'in-progress' && (
                         <Button 
                           size="sm"

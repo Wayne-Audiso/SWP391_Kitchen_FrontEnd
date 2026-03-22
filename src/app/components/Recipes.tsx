@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BookOpen, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Interface định nghĩa cấu trúc của một Recipe
+// Mỗi công thức sẽ phải có các thuộc tính này
 interface Recipe {
   id: string;
   productName: string;
@@ -17,11 +19,16 @@ interface Recipe {
   shelfLife: string;
 }
 
+// Dữ liệu mẫu ban đầu để hiển thị khi trang được load
+// Đây chỉ là mock data (dữ liệu giả)
+
 const initialRecipes: Recipe[] = [
   {
     id: 'RCP-001',
     productName: 'Fresh Bread',
     description: 'Traditional Vietnamese fresh bread',
+
+// Danh sách nguyên liệu
     ingredients: [
       { name: 'Wheat Flour', quantity: 500, unit: 'g' },
       { name: 'Water', quantity: 300, unit: 'ml' },
@@ -61,31 +68,49 @@ const initialRecipes: Recipe[] = [
   },
 ];
 
+// Component chính của trang Recipe Management
+
 export function Recipes() {
+
+  // State lưu toàn bộ danh sách recipe
   const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
+
+  // Recipe đang được chọn để xem chi tiết
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  // State điều khiển mở/đóng dialog tạo recipe
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  // State điều khiển dialog xem chi tiết recipe
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
+  // State lưu thông tin recipe mới khi user đang nhập
   const [newRecipe, setNewRecipe] = useState({
     productName: '',
     description: '',
     shelfLife: '',
   });
 
+  // State lưu nguyên liệu đang nhập
   const [newIngredient, setNewIngredient] = useState({
     name: '',
     quantity: '',
     unit: 'g',
   });
 
+  // Danh sách nguyên liệu tạm thời khi tạo recipe
   const [tempIngredients, setTempIngredients] = useState<{ name: string; quantity: number; unit: string }[]>([]);
 
+  // Hàm thêm nguyên liệu vào danh sách tempIngredients
   const handleAddIngredient = () => {
+
+    // Kiểm tra người dùng đã nhập đủ chưa
     if (!newIngredient.name || !newIngredient.quantity) {
       toast.error('Please fill in ingredient details');
       return;
     }
+
+    // Thêm nguyên liệu mới vào danh sách
 
     setTempIngredients([
       ...tempIngredients,
@@ -96,18 +121,27 @@ export function Recipes() {
       },
     ]);
 
+
+    // Reset input sau khi thêm
     setNewIngredient({ name: '', quantity: '', unit: 'g' });
   };
 
+
+   // Hàm xóa nguyên liệu khỏi danh sách
   const handleRemoveIngredient = (index: number) => {
     setTempIngredients(tempIngredients.filter((_, i) => i !== index));
   };
 
+  // Hàm tạo recipe mới
   const handleCreateRecipe = () => {
+
+    // Kiểm tra dữ liệu hợp lệ
     if (!newRecipe.productName || !newRecipe.description || tempIngredients.length === 0) {
       toast.error('Please fill in all fields and add at least one ingredient');
       return;
     }
+
+    // Tạo object recipe mới
 
     const recipe: Recipe = {
       id: `RCP-${String(recipes.length + 1).padStart(3, '0')}`,
@@ -117,13 +151,20 @@ export function Recipes() {
       shelfLife: newRecipe.shelfLife,
     };
 
+    // Thêm recipe vào danh sách
     setRecipes([...recipes, recipe]);
+
+    // Đóng dialog
     setIsCreateDialogOpen(false);
+
+    // Reset form
     setNewRecipe({ productName: '', description: '', shelfLife: '' });
     setTempIngredients([]);
     toast.success('Recipe created successfully!');
   };
 
+
+// Phần giao diện chính
   return (
     <div className="p-8">
       <div className="mb-8 flex items-center justify-between">
@@ -131,6 +172,9 @@ export function Recipes() {
           <h2 className="text-3xl font-bold text-gray-900">Recipe Management</h2>
           <p className="text-gray-600 mt-2">Production recipes and ingredient requirements</p>
         </div>
+
+        {/* Button mở dialog tạo recipe */}
+        
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
@@ -142,6 +186,8 @@ export function Recipes() {
             <DialogHeader>
               <DialogTitle>Create New Recipe</DialogTitle>
             </DialogHeader>
+
+            {/* Form nhập dữ liệu */}
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Product Name</Label>
@@ -151,6 +197,8 @@ export function Recipes() {
                   onChange={(e) => setNewRecipe({ ...newRecipe, productName: e.target.value })}
                 />
               </div>
+
+              {/* Input Description */}
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Input
@@ -159,6 +207,8 @@ export function Recipes() {
                   onChange={(e) => setNewRecipe({ ...newRecipe, description: e.target.value })}
                 />
               </div>
+
+              {/* Input Shelf Life */}
               <div className="space-y-2">
                 <Label>Shelf Life</Label>
                 <Input
@@ -168,8 +218,12 @@ export function Recipes() {
                 />
               </div>
 
+
+            {/* Phần thêm nguyên liệu */}
               <div className="border-t pt-4">
                 <h4 className="font-semibold mb-3">Ingredients</h4>
+
+                {/* Form nhập ingredient */}
                 <div className="grid grid-cols-12 gap-2 mb-3">
                   <Input
                     className="col-span-5"
@@ -177,6 +231,8 @@ export function Recipes() {
                     value={newIngredient.name}
                     onChange={(e) => setNewIngredient({ ...newIngredient, name: e.target.value })}
                   />
+
+                  {/* Quantity */}
                   <Input
                     className="col-span-3"
                     type="number"
@@ -184,6 +240,8 @@ export function Recipes() {
                     value={newIngredient.quantity}
                     onChange={(e) => setNewIngredient({ ...newIngredient, quantity: e.target.value })}
                   />
+
+                  {/* Unit */}
                   <Select
                     value={newIngredient.unit}
                     onValueChange={(value) => setNewIngredient({ ...newIngredient, unit: value })}
@@ -191,6 +249,8 @@ export function Recipes() {
                     <SelectTrigger className="col-span-2">
                       <SelectValue />
                     </SelectTrigger>
+
+                    {/* Danh sách đơn vị */}
                     <SelectContent>
                       <SelectItem value="g">g</SelectItem>
                       <SelectItem value="kg">kg</SelectItem>
@@ -199,10 +259,14 @@ export function Recipes() {
                       <SelectItem value="pcs">pcs</SelectItem>
                     </SelectContent>
                   </Select>
+
+                  {/* Button thêm ingredient */}
                   <Button className="col-span-2" onClick={handleAddIngredient} size="sm">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
+
+                {/* Hiển thị danh sách ingredient đã thêm */}
 
                 {tempIngredients.length > 0 && (
                   <div className="space-y-2">
@@ -213,6 +277,8 @@ export function Recipes() {
                           <span className="text-blue-600 font-semibold">
                             {ing.quantity} {ing.unit}
                           </span>
+
+                          {/* Button xóa ingredient */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -244,7 +310,7 @@ export function Recipes() {
         </Dialog>
       </div>
 
-      {/* Recipe Cards */}
+      {/* Hiển thị danh sách recipe dưới dạng Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recipes.map((recipe) => (
           <Card key={recipe.id} className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -263,7 +329,9 @@ export function Recipes() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-gray-600">{recipe.description}</p>
+
               
+              {/* Hiển thị một phần ingredients */}
               <div>
                 <p className="text-sm font-medium text-gray-900 mb-2">Ingredients:</p>
                 <div className="space-y-1">
@@ -284,6 +352,8 @@ export function Recipes() {
                   Shelf life: {recipe.shelfLife}
                 </Badge>
               </div>
+              
+              {/* Button xem chi tiết */}
 
               <Button 
                 variant="outline" 

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Calendar, Package, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Định nghĩa cấu trúc dữ liệu cho một Kế hoạch sản xuất
 interface ProductionPlan {
   id: string;
   productName: string;
@@ -18,6 +19,7 @@ interface ProductionPlan {
   status: 'planned' | 'in-progress' | 'completed';
 }
 
+// Định nghĩa cấu trúc dữ liệu cho một Lô sản xuất
 interface ProductionBatch {
   id: string;
   productName: string;
@@ -27,6 +29,7 @@ interface ProductionBatch {
   status: 'in-progress' | 'completed' | 'quality-check';
 }
 
+// Khởi tạo dữ liệu mẫu cho Kế hoạch sản xuất
 const initialPlans: ProductionPlan[] = [
   { id: 'PP-001', productName: 'Fresh Bread', planDate: '2026-01-21', quantity: 500, status: 'planned' },
   { id: 'PP-002', productName: 'Croissant', planDate: '2026-01-21', quantity: 300, status: 'in-progress' },
@@ -34,31 +37,36 @@ const initialPlans: ProductionPlan[] = [
   { id: 'PP-004', productName: 'Basic Pizza', planDate: '2026-01-22', quantity: 200, status: 'planned' },
 ];
 
+// Khởi tạo dữ liệu mẫu cho Lô sản xuất
 const initialBatches: ProductionBatch[] = [
   { id: '1', productName: 'Croissant', batchId: 'PB-1045', quantity: 150, startDate: '2026-01-20 08:00', status: 'in-progress' },
   { id: '2', productName: 'Fresh Bread', batchId: 'PB-1044', quantity: 500, startDate: '2026-01-20 06:00', status: 'quality-check' },
   { id: '3', productName: 'Sandwich', batchId: 'PB-1043', quantity: 400, startDate: '2026-01-19 14:00', status: 'completed' },
 ];
 
+// Component chính quản lý phân hệ Sản xuất
 export function Production() {
   const [plans, setPlans] = useState<ProductionPlan[]>(initialPlans);
   const [batches, setBatches] = useState<ProductionBatch[]>(initialBatches);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   
-  // Form state
+
+  // State lưu trữ dữ liệu nhập vào từ form tạo kế hoạch mới
   const [newPlan, setNewPlan] = useState({
     productName: '',
     planDate: '',
     quantity: '',
   });
 
+  // Hàm xử lý sự kiện khi nhấn nút "Create Plan"
   const handleCreatePlan = () => {
     if (!newPlan.productName || !newPlan.planDate || !newPlan.quantity) {
       toast.error('Please fill in all fields');
       return;
     }
 
+    // Tạo object kế hoạch mới
     const plan: ProductionPlan = {
       id: `PP-${String(plans.length + 1).padStart(3, '0')}`,
       productName: newPlan.productName,
@@ -67,17 +75,23 @@ export function Production() {
       status: 'planned',
     };
 
+    // Cập nhật danh sách kế hoạch
     setPlans([plan, ...plans]);
+
+    // Đóng popup, reset form và hiện thông báo thành công
     setIsDialogOpen(false);
     setNewPlan({ productName: '', planDate: '', quantity: '' });
     toast.success('Production plan created successfully!');
   };
 
+  // Hàm xử lý khi nhấn "Start Production"
   const handleStartProduction = (planId: string) => {
+    // 1. Cập nhật trạng thái của kế hoạch đó thành 'in-progress'
     setPlans(plans.map(p => 
       p.id === planId ? { ...p, status: 'in-progress' as const } : p
     ));
     
+    // 2. Tìm kế hoạch đó và tạo ra một lô sản xuất (batch) tương ứng
     const plan = plans.find(p => p.id === planId);
     if (plan) {
       const newBatch: ProductionBatch = {
@@ -93,6 +107,7 @@ export function Production() {
     }
   };
 
+  // Hàm xử lý khi nhấn "Complete" (Hoàn thành một lô sản xuất)
   const handleCompleteBatch = (batchId: string) => {
     setBatches(batches.map(b => 
       b.batchId === batchId ? { ...b, status: 'completed' as const } : b

@@ -1,60 +1,77 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Warehouse, 
-  ShoppingCart, 
-  BookOpen, 
-  Store, 
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
+import {
+  Package,
+  Truck,
+  AlertTriangle,
+  TrendingDown,
+  DollarSign,
   Users,
-  TruckIcon,
-  ClipboardCheck,
-  BarChart3,
-  FileText,
-  Settings,
-  ShoppingBag,
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  UserCog,
-  ShieldCheck,
   Building2,
   ChefHat,
-  FileSpreadsheet,
-  Activity,
-  CalendarClock,
-  PackageCheck,
-  Bell
-} from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { getFunctionsByRole, type Role } from '@/app/utils/permissions';
+  CheckCircle2,
+  Clock,
+  Store,
+  Loader2,
+  Badge,
+} from "lucide-react";
+import { toast } from "sonner";
+import { storeOrdersApi, shipmentsApi } from "@/app/services/ordersService";
+import type { StoreOrderDto, ShipmentDto } from "@/app/services/ordersService";
+import {
+  franchiseStoresApi,
+  centralKitchensApi,
+} from "@/app/services/storesService";
+import type {
+  FranchiseStoreDto,
+  CentralKitchenDto,
+} from "@/app/services/storesService";
+import { storeInventoryApi } from "@/app/services/inventoryService";
+import type { StoreCostRecordDto } from "@/app/services/inventoryService";
+import { usersApi } from "@/app/services/usersService";
+import type { UserApiModel } from "@/app/services/usersService";
 
-interface QuickAccessCard {
-  id: string;
-  title: string;
-  description: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-  level: string;
+// ── Helpers ────────────────────────────────────────────────────────────────────
+// thêm hàm định dạng tiền VND và ngày tháng
+function formatVND(amount: number): string {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
 }
 
-export function HomePage() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Failed to parse user', error);
-      }
-    }
-  }, []);
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
   const selectedRole = currentUser?.role || 'Franchise Store Staff';
 

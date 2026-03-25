@@ -74,7 +74,7 @@ function formatDate(dateStr?: string | null): string {
 }
 
 // ── Shared UI ──────────────────────────────────────────────────────────────────
-
+// thêm tiện ích định dạng và các component giao diện dùng chung
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center py-16">
@@ -163,42 +163,390 @@ function OrderStatusBadge({ status }: { status?: string }) {
   );
 }
 
-      return {
-        id: func.id,
-        title: func.title,
-        description: func.description,
-        icon: iconData.icon,
-        color: iconData.color,
-        bgColor: iconData.bgColor,
-        level: func.level
-      };
-    });
+// ── Role 1: Supply Coordinator ─────────────────────────────────────────────────
 
-  const recentActivities = [
-    { id: 1, action: 'Production Batch #PB-1024 completed', user: 'Emily Wong', time: '10 minutes ago', status: 'success', roles: ['Admin', 'Central Kitchen Staff', 'Supply Coordinator', 'Manager'] },
-    { id: 2, action: 'Store Order #SO-2401 created', user: 'Sarah Johnson', time: '25 minutes ago', status: 'info', roles: ['Admin', 'Manager', 'Supply Coordinator', 'Franchise Store Staff'] },
-    { id: 3, action: 'Shipment #SH-890 dispatched', user: 'Michael Chen', time: '1 hour ago', status: 'success', roles: ['Admin', 'Supply Coordinator', 'Manager', 'Central Kitchen Staff'] },
-    { id: 4, action: 'Quality check completed for Lot #LOT-456', user: 'Store Staff', time: '2 hours ago', status: 'success', roles: ['Admin', 'Manager', 'Franchise Store Staff'] },
-    { id: 5, action: 'Low stock alert: Wheat Flour', user: 'System', time: '3 hours ago', status: 'warning', roles: ['Admin', 'Supply Coordinator', 'Manager', 'Central Kitchen Staff'] },
-    { id: 6, action: 'New store order received from District 3', user: 'System', time: '30 minutes ago', status: 'info', roles: ['Central Kitchen Staff', 'Supply Coordinator', 'Manager'] },
-    { id: 7, action: 'Inventory updated - Fresh vegetables restocked', user: 'Kitchen Staff', time: '1 hour ago', status: 'success', roles: ['Central Kitchen Staff', 'Manager'] },
-    { id: 8, action: 'Daily production report generated', user: 'System', time: '2 hours ago', status: 'success', roles: ['Central Kitchen Staff', 'Manager', 'Admin'] },
-  ];
+function SupplyCoordinatorDashboard() {
+  const [orders, setOrders] = useState<StoreOrderDto[]>([]);
+  const [shipments, setShipments] = useState<ShipmentDto[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pendingTasks = [
-    { id: 1, task: 'Review and approve Store Order #SO-2401', priority: 'high', dueDate: 'Today', roles: ['Admin', 'Manager', 'Supply Coordinator'] },
-    { id: 2, task: 'Update Production Plan for next week', priority: 'medium', dueDate: 'Tomorrow', roles: ['Admin', 'Central Kitchen Staff', 'Manager'] },
-    { id: 3, task: 'Quality check for incoming shipment #SH-891', priority: 'high', dueDate: 'Today', roles: ['Admin', 'Manager', 'Franchise Store Staff'] },
-    { id: 4, task: 'Aggregate store orders for batch production', priority: 'medium', dueDate: 'Today', roles: ['Admin', 'Manager', 'Supply Coordinator'] },
-    { id: 5, task: 'Receive and check shipment #SH-891', priority: 'high', dueDate: 'Today', roles: ['Franchise Store Staff', 'Manager'] },
-    { id: 6, task: 'Prepare production batch #PB-1025', priority: 'medium', dueDate: 'Tomorrow', roles: ['Central Kitchen Staff', 'Manager'] },
-    { id: 7, task: 'Update store inventory levels', priority: 'medium', dueDate: 'Today', roles: ['Franchise Store Staff', 'Manager'] },
-    { id: 8, task: 'Resolve delivery scheduling conflict', priority: 'high', dueDate: 'Today', roles: ['Supply Coordinator', 'Manager'] },
-  ];
+  useEffect(() => {
+    Promise.all([storeOrdersApi.getAll(), shipmentsApi.getAll()])
+      .then(([o, s]) => {
+        setOrders(o);
+        setShipments(s);
+      })
+      .catch(() => toast.error("Không thể tải dữ liệu dashboard"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filteredActivities = recentActivities.filter(activity =>
-    activity.roles.includes(selectedRole)
+  const pendingOrders = orders.filter((o) => o.status === "Pending").length;
+  const activeDeliveries = shipments.filter(
+    (s) => s.deliveryStatus === "InTransit",
+  ).length;
+  const rejectedOrders = orders.filter(
+    (o) => o.status === "Rejected" || o.status === "RejectedByStore",
   );
+  const cancelledShipments = shipments.filter(
+    (s) => s.deliveryStatus === "Cancelled",
+  );
+  const issues = rejectedOrders.length + cancelledShipments.length;
+
+  const recentPending = [...orders]
+    .filter((o) => o.status === "Pending")
+    .sort(
+      (a, b) =>
+        new Date(a.orderDate ?? 0).getTime() -
+        new Date(b.orderDate ?? 0).getTime(),
+    )
+    .slice(0, 5);
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard — Điều phối cung ứng
+        </h1>
+        <p className="text-gray-500 mt-1">Tổng quan hoạt động vận hành</p>
+      </div>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <>
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <KpiCard
+              title="Đơn hàng chờ gom"
+              value={pendingOrders}
+              icon={Package}
+              color="blue"
+              sub="Cần tổng hợp để lên lịch sản xuất"
+            />
+            <KpiCard
+              title="Hàng đang vận chuyển"
+              value={activeDeliveries}
+              icon={Truck}
+              color="orange"
+              sub="Lô hàng đang trên đường giao"
+            />
+            <KpiCard
+              title="Sự cố phát sinh"
+              value={issues}
+              icon={AlertTriangle}
+              color="red"
+              sub="Đơn bị từ chối, hủy hoặc báo thiếu hàng"
+            />
+          </div>
+
+          {/* Pending orders table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">
+                Đơn hàng chờ xử lý ({pendingOrders})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {recentPending.length === 0 ? (
+                <p className="text-sm text-gray-400 px-6 pb-5">
+                  Không có đơn nào đang chờ.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                        <th className="px-6 py-3 text-left font-medium">
+                          Mã đơn
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Cửa hàng
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Bếp trung tâm
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Ngày đặt
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Giao dự kiến
+                        </th>
+                        <th className="px-6 py-3 text-right font-medium">
+                          SL sản phẩm
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {recentPending.map((o) => (
+                        <tr
+                          key={o.storeOrderId}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{o.storeOrderId}
+                          </td>
+                          <td className="px-6 py-3 font-medium text-gray-900">
+                            {o.storeName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-600">
+                            {o.kitchenName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">
+                            {formatDate(o.orderDate)}
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">
+                            {formatDate(o.deliveryDate)}
+                          </td>
+                          <td className="px-6 py-3 text-right text-gray-700">
+                            {o.totalQuantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Issues table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-red-600">
+                Sự cố cần xử lý ({issues})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {issues === 0 ? (
+                <p className="text-sm text-gray-400 px-6 pb-5">
+                  Không có sự cố nào.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                        <th className="px-6 py-3 text-left font-medium">
+                          Loại
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">Mã</th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Cửa hàng / Bếp
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Trạng thái
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Lý do / Ghi chú
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {rejectedOrders.map((o) => (
+                        <tr
+                          key={`order-${o.storeOrderId}`}
+                          className="hover:bg-red-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 text-gray-500">Đơn hàng</td>
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{o.storeOrderId}
+                          </td>
+                          <td className="px-6 py-3 text-gray-700">
+                            {o.storeName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            <OrderStatusBadge status={o.status} />
+                          </td>
+                          <td className="px-6 py-3 text-gray-500 max-w-xs truncate">
+                            {o.rejectReason ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {cancelledShipments.map((s) => (
+                        <tr
+                          key={`ship-${s.shipmentId}`}
+                          className="hover:bg-red-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 text-gray-500">Lô hàng</td>
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{s.shipmentId}
+                          </td>
+                          <td className="px-6 py-3 text-gray-700">
+                            {s.kitchenName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                              Đã hủy
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">—</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
+
+          {/* Pending orders table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">
+                Đơn hàng chờ xử lý ({pendingOrders})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {recentPending.length === 0 ? (
+                <p className="text-sm text-gray-400 px-6 pb-5">
+                  Không có đơn nào đang chờ.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                        <th className="px-6 py-3 text-left font-medium">
+                          Mã đơn
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Cửa hàng
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Bếp trung tâm
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Ngày đặt
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Giao dự kiến
+                        </th>
+                        <th className="px-6 py-3 text-right font-medium">
+                          SL sản phẩm
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {recentPending.map((o) => (
+                        <tr
+                          key={o.storeOrderId}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{o.storeOrderId}
+                          </td>
+                          <td className="px-6 py-3 font-medium text-gray-900">
+                            {o.storeName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-600">
+                            {o.kitchenName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">
+                            {formatDate(o.orderDate)}
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">
+                            {formatDate(o.deliveryDate)}
+                          </td>
+                          <td className="px-6 py-3 text-right text-gray-700">
+                            {o.totalQuantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Issues table */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-red-600">
+                Sự cố cần xử lý ({issues})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {issues === 0 ? (
+                <p className="text-sm text-gray-400 px-6 pb-5">
+                  Không có sự cố nào.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+                        <th className="px-6 py-3 text-left font-medium">
+                          Loại
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">Mã</th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Cửa hàng / Bếp
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Trạng thái
+                        </th>
+                        <th className="px-6 py-3 text-left font-medium">
+                          Lý do / Ghi chú
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {rejectedOrders.map((o) => (
+                        <tr
+                          key={`order-${o.storeOrderId}`}
+                          className="hover:bg-red-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 text-gray-500">Đơn hàng</td>
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{o.storeOrderId}
+                          </td>
+                          <td className="px-6 py-3 text-gray-700">
+                            {o.storeName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            <OrderStatusBadge status={o.status} />
+                          </td>
+                          <td className="px-6 py-3 text-gray-500 max-w-xs truncate">
+                            {o.rejectReason ?? "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {cancelledShipments.map((s) => (
+                        <tr
+                          key={`ship-${s.shipmentId}`}
+                          className="hover:bg-red-50 transition-colors"
+                        >
+                          <td className="px-6 py-3 text-gray-500">Lô hàng</td>
+                          <td className="px-6 py-3 font-mono text-gray-600">
+                            #{s.shipmentId}
+                          </td>
+                          <td className="px-6 py-3 text-gray-700">
+                            {s.kitchenName ?? "—"}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                              Đã hủy
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-gray-500">—</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}
 
   const filteredTasks = pendingTasks.filter(task =>
     task.roles.includes(selectedRole)

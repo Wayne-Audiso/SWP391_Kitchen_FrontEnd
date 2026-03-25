@@ -164,7 +164,7 @@ function OrderStatusBadge({ status }: { status?: string }) {
 }
 
 // ── Role 1: Supply Coordinator ─────────────────────────────────────────────────
-
+// triển khai giao diện điều phối cung ứng và thống kê vận hành
 function SupplyCoordinatorDashboard() {
   const [orders, setOrders] = useState<StoreOrderDto[]>([]);
   const [shipments, setShipments] = useState<ShipmentDto[]>([]);
@@ -393,76 +393,226 @@ function SupplyCoordinatorDashboard() {
   );
 }
 
-          {/* Pending orders table */}
+ // ── Role 2: Manager ────────────────────────────────────────────────────────────
+
+function ManagerDashboard() {
+  const [stores, setStores] = useState<FranchiseStoreDto[]>([]);
+  const [allCosts, setAllCosts] = useState<StoreCostRecordDto[]>([]);
+  const [orders, setOrders] = useState<StoreOrderDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([storeOrdersApi.getAll(), franchiseStoresApi.getAll()])
+      .then(async ([orderList, storeList]) => {
+        setOrders(orderList);
+        setStores(storeList);
+        const costsPerStore = await Promise.all(
+          storeList.map((s) => storeInventoryApi.getCosts(s.storeId)),
+        );
+        setAllCosts(costsPerStore.flat());
+      })
+      .catch(() => toast.error("Không thể tải dữ liệu dashboard"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const operatingTotal = allCosts
+    .filter((c) => c.costType === "OperatingCost")
+    .reduce((acc, c) => acc + c.cost, 0);
+  const wasteTotal = allCosts
+    .filter((c) => c.costType === "WasteCost")
+    .reduce((acc, c) => acc + c.cost, 0);
+
+  const costByStore = stores.map((s) => ({
+    name: s.storeName,
+    operating: allCosts
+      .filter((c) => c.storeId === s.storeId && c.costType === "OperatingCost")
+      .reduce((acc, c) => acc + c.cost, 0),
+    waste: allCosts
+      .filter((c) => c.storeId === s.storeId && c.costType === "WasteCost")
+      .reduce((acc, c) => acc + c.cost, 0),
+  }));
+
+  const wasteByIngredient = allCosts
+    .filter((c) => c.costType === "WasteCost")
+    .reduce<Record<string, number>>((acc, c) => {
+      acc[c.ingredientName] = (acc[c.ingredientName] ?? 0) + c.cost;
+      return acc;
+    }, {});
+  const top5Waste = Object.entries(wasteByIngredient)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  const productQty = orders
+    .filter((o) => o.status === "Delivered")
+    .flatMap((o) => o.lines)
+    .reduce<Record<string, number>>((acc, l) => {
+      const name = l.productName ?? `#${l.productId}`;
+      acc[name] = (acc[name] ?? 0) + l.quantity;
+      return acc;
+    }, {});
+  const top5Products = Object.entries(productQty)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard — Quản lý vận hành
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Tổng quan chi phí và hao hụt toàn chuỗi
+        </p>
+      </div>
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <>
+          {/* KPI cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <KpiCard
+              title="Tổng chi phí vận hành"
+              value={formatVND(operatingTotal)}
+              icon={DollarSign}
+              color="blue"
+              sub="Tổng nguyên liệu tiêu thụ qua bán hàng (tất cả chi nhánh)"
+            />
+            <KpiCard
+              title="Tổng giá trị hao hụt"
+              value={formatVND(wasteTotal)}
+              icon={TrendingDown}
+              color="red"
+              sub="Hàng hết hạn và bị hỏng (tất cả chi nhánh)"
+            />
+          </div>
+
+          {/* Grouped bar chart: operating cost + waste per store */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">
-                Đơn hàng chờ xử lý ({pendingOrders})
+            <CardHeader>
+              <CardTitle className="text-base">
+                Chi phí vận hành & Hao hụt theo cửa hàng
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              {recentPending.length === 0 ? (
-                <p className="text-sm text-gray-400 px-6 pb-5">
-                  Không có đơn nào đang chờ.
+            <CardContent>
+              {costByStore.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">
+                  Chưa có dữ liệu
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-                        <th className="px-6 py-3 text-left font-medium">
-                          Mã đơn
-                        </th>
-                        <th className="px-6 py-3 text-left font-medium">
-                          Cửa hàng
-                        </th>
-                        <th className="px-6 py-3 text-left font-medium">
-                          Bếp trung tâm
-                        </th>
-                        <th className="px-6 py-3 text-left font-medium">
-                          Ngày đặt
-                        </th>
-                        <th className="px-6 py-3 text-left font-medium">
-                          Giao dự kiến
-                        </th>
-                        <th className="px-6 py-3 text-right font-medium">
-                          SL sản phẩm
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {recentPending.map((o) => (
-                        <tr
-                          key={o.storeOrderId}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-6 py-3 font-mono text-gray-600">
-                            #{o.storeOrderId}
-                          </td>
-                          <td className="px-6 py-3 font-medium text-gray-900">
-                            {o.storeName ?? "—"}
-                          </td>
-                          <td className="px-6 py-3 text-gray-600">
-                            {o.kitchenName ?? "—"}
-                          </td>
-                          <td className="px-6 py-3 text-gray-500">
-                            {formatDate(o.orderDate)}
-                          </td>
-                          <td className="px-6 py-3 text-gray-500">
-                            {formatDate(o.deliveryDate)}
-                          </td>
-                          <td className="px-6 py-3 text-right text-gray-700">
-                            {o.totalQuantity}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={costByStore}
+                    margin={{ top: 4, right: 16, left: 0, bottom: 4 }}
+                  >
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <Tooltip
+                      formatter={(v: number, name: string) => [
+                        formatVND(v),
+                        name === "operating" ? "Chi phí vận hành" : "Hao hụt",
+                      ]}
+                    />
+                    <Legend
+                      formatter={(value) =>
+                        value === "operating" ? "Chi phí vận hành" : "Hao hụt"
+                      }
+                    />
+                    <Bar
+                      dataKey="operating"
+                      name="operating"
+                      fill="#3b82f6"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="waste"
+                      name="waste"
+                      fill="#ef4444"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
 
+          {/* Top 5 lists */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Top 5 nguyên liệu hao hụt nhiều nhất
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {top5Waste.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">
+                    Chưa có dữ liệu hao hụt
+                  </p>
+                ) : (
+                  <ol className="space-y-3 pt-1">
+                    {top5Waste.map(([name, cost], i) => (
+                      <li
+                        key={name}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 text-xs font-bold flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm font-medium">{name}</span>
+                        </div>
+                        <span className="text-sm text-red-600 font-semibold ml-2">
+                          {formatVND(cost)}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Top 5 sản phẩm bán chạy nhất
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {top5Products.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">
+                    Chưa có đơn hàng nào được giao
+                  </p>
+                ) : (
+                  <ol className="space-y-3 pt-1">
+                    {top5Products.map(([name, qty], i) => (
+                      <li
+                        key={name}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <span className="text-sm font-medium">{name}</span>
+                        </div>
+                        <span className="text-sm text-blue-600 font-semibold ml-2">
+                          {qty.toLocaleString("vi-VN")} đơn vị
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
           {/* Issues table */}
           <Card>
             <CardHeader className="pb-3">

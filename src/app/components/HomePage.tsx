@@ -73,83 +73,96 @@ function formatDate(dateStr?: string | null): string {
   });
 }
 
-  const selectedRole = currentUser?.role || 'Franchise Store Staff';
+// ── Shared UI ──────────────────────────────────────────────────────────────────
 
-  // Map function IDs to icon, color, and bgColor
-  const functionIconMap: Record<string, { icon: any; color: string; bgColor: string }> = {
-    // Admin Functions
-    'AD-02': { icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    'AD-03': { icon: ShieldCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
-    'AD-04': { icon: UserCog, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'AD-05': { icon: Store, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-    'AD-06': { icon: Building2, color: 'text-green-600', bgColor: 'bg-green-100' },
-    'AD-07': { icon: Package, color: 'text-red-600', bgColor: 'bg-red-100' },
-    'AD-08': { icon: Settings, color: 'text-gray-600', bgColor: 'bg-gray-100' },
-    'AD-09': { icon: Activity, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-    'AD-10': { icon: BarChart3, color: 'text-violet-600', bgColor: 'bg-violet-100' },
-    
-    // Manager Functions
-    'MG-01': { icon: LayoutDashboard, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'MG-02': { icon: PackageCheck, color: 'text-pink-600', bgColor: 'bg-pink-100' },
-    'MG-03': { icon: Package, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-    'MG-04': { icon: Activity, color: 'text-green-600', bgColor: 'bg-green-100' },
-    'MG-05': { icon: BookOpen, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    'MG-06': { icon: ShoppingBag, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-    'MG-07': { icon: BarChart3, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
-    'MG-08': { icon: TruckIcon, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-    'MG-09': { icon: FileSpreadsheet, color: 'text-red-600', bgColor: 'bg-red-100' },
-    'MG-10': { icon: ShoppingCart, color: 'text-violet-600', bgColor: 'bg-violet-100' },
-    'MG-11': { icon: Activity, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'MG-12': { icon: FileText, color: 'text-gray-600', bgColor: 'bg-gray-100' },
-    
-    // Franchise Store Staff Functions
-    'FS-02': { icon: Store, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'FS-03': { icon: Warehouse, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-    'FS-04': { icon: ShoppingCart, color: 'text-red-600', bgColor: 'bg-red-100' },
-    'FS-05': { icon: FileText, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    'FS-06': { icon: Activity, color: 'text-green-600', bgColor: 'bg-green-100' },
-    'FS-07': { icon: PackageCheck, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-    'FS-08': { icon: ClipboardCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-    'FS-09': { icon: AlertCircle, color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
-    'FS-10': { icon: BookOpen, color: 'text-violet-600', bgColor: 'bg-violet-100' },
-    
-    // Central Kitchen Staff Functions
-    'CK-02': { icon: ChefHat, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-    'CK-03': { icon: ShoppingCart, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'CK-04': { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-100' },
-    'CK-05': { icon: CalendarClock, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    'CK-06': { icon: Activity, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
-    'CK-07': { icon: ShoppingBag, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-    'CK-08': { icon: Package, color: 'text-pink-600', bgColor: 'bg-pink-100' },
-    'CK-09': { icon: TruckIcon, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-    'CK-10': { icon: PackageCheck, color: 'text-violet-600', bgColor: 'bg-violet-100' },
-    'CK-11': { icon: AlertCircle, color: 'text-red-600', bgColor: 'bg-red-100' },
-    
-    // Supply Coordinator Functions
-    'SC-01': { icon: LayoutDashboard, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    'SC-02': { icon: FileText, color: 'text-purple-600', bgColor: 'bg-purple-100' },
-    'SC-03': { icon: ShoppingCart, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-    'SC-04': { icon: Activity, color: 'text-green-600', bgColor: 'bg-green-100' },
-    'SC-05': { icon: AlertCircle, color: 'text-red-600', bgColor: 'bg-red-100' },
-    'SC-06': { icon: CalendarClock, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
-    'SC-07': { icon: FileText, color: 'text-violet-600', bgColor: 'bg-violet-100' },
-    'SC-08': { icon: Bell, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-    'SC-09': { icon: TruckIcon, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-    'SC-10': { icon: FileSpreadsheet, color: 'text-pink-600', bgColor: 'bg-pink-100' },
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+    </div>
+  );
+}
+
+const colorMap = {
+  blue: { text: "text-blue-600", icon: "bg-blue-100" },
+  orange: { text: "text-orange-600", icon: "bg-orange-100" },
+  red: { text: "text-red-600", icon: "bg-red-100" },
+  violet: { text: "text-violet-600", icon: "bg-violet-100" },
+  green: { text: "text-emerald-600", icon: "bg-emerald-100" },
+  amber: { text: "text-amber-600", icon: "bg-amber-100" },
+};
+
+interface KpiCardProps {
+  title: string;
+  value: number | string;
+  icon: React.ElementType;
+  color: keyof typeof colorMap;
+  sub: string;
+}
+
+function KpiCard({ title, value, icon: Icon, color, sub }: KpiCardProps) {
+  const c = colorMap[color];
+  return (
+    <Card>
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-gray-500">{title}</p>
+            <p className={`text-3xl font-bold mt-1 truncate ${c.text}`}>
+              {value}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">{sub}</p>
+          </div>
+          <div className={`p-3 rounded-xl ml-4 shrink-0 ${c.icon}`}>
+            <Icon className={`h-6 w-6 ${c.text}`} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OrderStatusBadge({ status }: { status?: string }) {
+  const config: Record<string, { label: string; className: string }> = {
+    Pending: { label: "Chờ xử lý", className: "bg-yellow-100 text-yellow-700" },
+    Submitted: { label: "Đã gửi", className: "bg-blue-100 text-blue-700" },
+    Approved: { label: "Đã duyệt", className: "bg-indigo-100 text-indigo-700" },
+    Rejected: { label: "Từ chối", className: "bg-red-100 text-red-700" },
+    Delivering: {
+      label: "Đang giao",
+      className: "bg-orange-100 text-orange-700",
+    },
+    NeedsProduction: {
+      label: "Cần sản xuất",
+      className: "bg-purple-100 text-purple-700",
+    },
+    InProduction: {
+      label: "Đang sản xuất",
+      className: "bg-amber-100 text-amber-700",
+    },
+    ProductionCompleted: {
+      label: "Sản xuất xong",
+      className: "bg-teal-100 text-teal-700",
+    },
+    Delivered: { label: "Đã giao", className: "bg-green-100 text-green-700" },
+    RejectedByStore: {
+      label: "Store từ chối",
+      className: "bg-rose-100 text-rose-700",
+    },
   };
-// Lấy danh sách function theo Role và tạo Quick Access Card
-  const functions = getFunctionsByRole(selectedRole);
-  
-  // Filter out Login/Logout functions and convert to QuickAccessCard format
-  const quickAccessCards: QuickAccessCard[] = functions
-    .filter(func => !func.title.includes('Login') && !func.title.includes('Logout'))
-    .map(func => {
-      const iconData = functionIconMap[func.id] || { 
-        icon: Settings, 
-        color: 'text-gray-600', 
-        bgColor: 'bg-gray-100' 
-      };
-      
+  const s = config[status ?? ""] ?? {
+    label: status ?? "—",
+    className: "bg-gray-100 text-gray-700",
+  };
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s.className}`}
+    >
+      {s.label}
+    </span>
+  );
+}
+
       return {
         id: func.id,
         title: func.title,
